@@ -18,6 +18,7 @@ from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
     PlainTextResponse,
+    RedirectResponse,
     StreamingResponse,
 )
 from fastapi.staticfiles import StaticFiles
@@ -33,6 +34,7 @@ from media import (
 )
 from starlette.background import BackgroundTask
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from tweet import TweetResolver
 
 settings = Settings.from_env()
 
@@ -64,6 +66,8 @@ gif_cache = GifCache(
 )
 conversion_limiter = SlidingWindowRateLimiter(settings.convert_rate_limit_per_minute)
 download_limiter = SlidingWindowRateLimiter(settings.download_rate_limit_per_minute)
+resolve_limiter = SlidingWindowRateLimiter(settings.resolve_rate_limit_per_minute)
+tweet_resolver = TweetResolver(settings)
 
 
 def cleanup_stale_temp_dirs(max_age_seconds: int = 3600) -> None:
@@ -112,6 +116,7 @@ async def lifespan(_app: FastAPI):
         cleanup_task.cancel()
         with suppress(asyncio.CancelledError):
             await cleanup_task
+        await tweet_resolver.close()
         await media_client.close()
 
 
@@ -250,13 +255,46 @@ async def landing_page(request: Request) -> HTMLResponse:
         name="index.html",
         context=page_context(
             request,
-            page_title=f"{settings.site_name} - Download X GIFs as MP4 or GIF",
+            page_title=f"Twitter GIF Downloader - Download X GIFs as MP4 or GIF - {settings.site_name}",
             page_description=(
-                "A free X (Twitter) GIF downloader. Reply to a post with the bot, "
-                "then download the original MP4 instantly or convert it to a true GIF."
+                "Paste any public X (Twitter) post link to download its GIF as the "
+                "original MP4 or convert it to a true animated GIF. Free, no sign-up, "
+                "no watermark."
             ),
         ),
     )
+
+
+@app.get("/go", include_in_schema=False)
+async def resolve_post(
+    request: Request,
+    url: str = Query(default=""),
+    post: str = Query(default=""),
+):
+    if not resolve_limiter.allow(client_ip(request)):
+        return render_error(
+            request,
+            MediaError(
+                "Too many post lookups from this connection. Please wait a minute.",
+                429,
+            ),
+            retry_after=60,
+        )
+
+    try:
+        media = await tweet_resolver.resolve(url or post)
+    except MediaError as exc:
+        return render_error(
+            request,
+            exc,
+            retry_after=60 if exc.status_code == 429 else None,
+        )
+
+    query = (
+        f"?url={quote(media.url, safe='')}"
+        f"&tweet_id={quote(media.tweet_id, safe='')}"
+    )
+    return RedirectResponse(url=f"/download{query}", status_code=303)
 
 
 @app.get("/download", response_class=HTMLResponse)
@@ -492,7 +530,7 @@ async def favicon() -> FileResponse:
 @app.get("/robots.txt", include_in_schema=False)
 async def robots() -> PlainTextResponse:
     return PlainTextResponse(
-        "User-agent: *\nAllow: /\nDisallow: /download\nDisallow: /convert\n"
+        "User-agent: *\nAllow: /\nDisallow: /go\nDisallow: /download\nDisallow: /convert\n"
     )
 
 

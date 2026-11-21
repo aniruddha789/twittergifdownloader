@@ -9,22 +9,26 @@
   <div class="legal-card">
     <h2>What this service does</h2>
     <p>
-      {{ site_name }} turns a public X (Twitter) media URL into a downloadable MP4
-      or GIF. You do not create an account and we do not ask for your X password.
+      {{ site_name }} turns a public X (Twitter) post or media URL into a downloadable
+      MP4 or GIF. You do not create an account and we do not ask for your X password.
     </p>
 
     <h2>Data we process</h2>
     <ul>
+      <li>The public X post link or tweet ID you paste on the homepage.</li>
       <li>The media URL and tweet ID passed in the download page link.</li>
       <li>Standard server logs such as IP address, browser user agent, requested path, and timestamp.</li>
       <li>Temporary copies of media files while a GIF conversion is running.</li>
       <li>Fingerprinted copies of converted GIFs kept in a short-lived on-disk cache.</li>
     </ul>
     <p>
-      Temporary working files are deleted immediately after the response is sent.
-      Converted GIFs may be cached by a hash of the source video to avoid re-encoding;
-      the oldest entries are purged automatically and you can request removal at any
-      time. We do not build user profiles and we do not sell personal information.
+      Homepage lookups are sent to X's public syndication endpoint so we can find the
+      media attached to a public post. We do not send pasted links to advertising
+      partners. Temporary working files are deleted immediately after the response is
+      sent. Converted GIFs may be cached by a hash of the source video to avoid
+      re-encoding; the oldest entries are purged automatically and you can request
+      removal at any time. We do not build user profiles and we do not sell personal
+      information.
     </p>
 
     <h2>Cookies and advertising</h2>
@@ -39,6 +43,7 @@
 
     <h2>Security</h2>
     <p>
+      The homepage resolver only accepts public post links from x.com and twitter.com.
       Media downloads are restricted to approved X media hostnames over HTTPS. URLs
       pointing at arbitrary hosts, private addresses, or non-video files are rejected.
     </p>

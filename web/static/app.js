@@ -26,6 +26,30 @@
     });
   });
 
+  const resolveForm = document.querySelector("[data-resolve-form]");
+
+  if (resolveForm) {
+    const submit = resolveForm.querySelector('button[type="submit"]');
+    const label = submit ? submit.querySelector(".resolve-submit-label") : null;
+    const originalLabel = label ? label.textContent : "";
+
+    resolveForm.addEventListener("submit", () => {
+      if (!submit) return;
+      submit.dataset.busy = "1";
+      submit.setAttribute("aria-busy", "true");
+      submit.disabled = true;
+      if (label) label.textContent = "Finding GIF...";
+    });
+
+    window.addEventListener("pageshow", () => {
+      if (!submit) return;
+      delete submit.dataset.busy;
+      submit.removeAttribute("aria-busy");
+      submit.disabled = false;
+      if (label) label.textContent = originalLabel;
+    });
+  }
+
   const convertButton = document.getElementById("convertBtn");
   const convertHint = document.getElementById("convertHint");
 

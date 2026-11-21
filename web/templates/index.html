@@ -22,19 +22,53 @@
 <section class="hero container">
   <div class="hero-copy">
     <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Free, no sign-up, no watermark</span>
-    <h1>Save any <span class="gradient-text">X GIF</span> in seconds.</h1>
+    <h1>Download any <span class="gradient-text">X GIF</span> in seconds.</h1>
     <p class="lede">
-      Reply to a post containing a GIF and mention the bot. It replies with a fast,
-      mobile-friendly download page where you can grab the original MP4 instantly
-      or convert it to a true animated GIF.
+      Paste a public X (Twitter) post link below. Grab the original MP4 instantly,
+      or convert it to a true animated GIF. No login, no app, no watermark.
     </p>
+
+    <form class="resolve-form" action="/go" method="get" data-resolve-form>
+      <label class="resolve-label" for="post-url">Paste an X post link</label>
+      <div class="resolve-row">
+        <div class="resolve-field">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M10 14a4 4 0 0 1 0-5.7l2.3-2.3a4 4 0 0 1 5.7 5.7l-1.3 1.3M14 10a4 4 0 0 1 0 5.7l-2.3 2.3a4 4 0 0 1-5.7-5.7l1.3-1.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <input
+            class="resolve-input"
+            id="post-url"
+            name="url"
+            type="text"
+            inputmode="url"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="https://x.com/user/status/..."
+            aria-describedby="resolve-hint"
+            required
+          >
+        </div>
+        <button class="btn btn-primary resolve-submit" type="submit">
+          <span class="resolve-submit-label">Get GIF</span>
+        </button>
+      </div>
+      <p class="resolve-hint" id="resolve-hint">Works with public posts from x.com and twitter.com.</p>
+    </form>
+
+    <ol class="resolve-steps" aria-label="How to download an X GIF">
+      <li><span class="resolve-step-num">1</span><span>Copy the post link</span></li>
+      <li><span class="resolve-step-num">2</span><span>Paste it above</span></li>
+      <li><span class="resolve-step-num">3</span><span>Save MP4 or GIF</span></li>
+    </ol>
+
     <div class="hero-actions">
       {% if bot_profile_url %}
-        <a class="btn btn-primary btn-lg" href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">
+        <a class="btn btn-ghost btn-lg" href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path d="M4 4l7.2 9.5L4.4 20H7l5.4-5.2L16.8 20H20l-7.5-9.9L18.8 4h-2.6l-4.9 4.8L7.2 4H4Z" fill="currentColor"></path>
           </svg>
-          <span>Open @{{ bot_handle }} on X</span>
+          <span>Or mention @{{ bot_handle }} on X</span>
         </a>
       {% endif %}
       <a class="btn btn-ghost btn-lg" href="#how-it-works">See how it works</a>
@@ -81,29 +115,25 @@
 <section class="section container" id="how-it-works">
   <div class="section-head">
     <span class="eyebrow">Three steps</span>
-    <h2>From post to download in under a minute.</h2>
-    <p>No accounts, browser extensions, or sketchy redirects. Just a link back to your file.</p>
+    <h2>From link to download in under a minute.</h2>
+    <p>No accounts, browser extensions, or sketchy redirects. Just a public post link and your file.</p>
   </div>
 
   <div class="steps">
     <article class="step-card">
       <span class="step-number">01</span>
-      <h3>Find a post with a GIF</h3>
-      <p>Any public X post with an animated GIF or video attachment works.</p>
+      <h3>Copy the post link</h3>
+      <p>Open the X post with the GIF, then tap Share &rarr; Copy link. The post must be public.</p>
     </article>
     <article class="step-card">
       <span class="step-number">02</span>
-      <h3>Reply and mention the bot</h3>
-      <p>
-        Reply to that post and mention
-        {% if bot_handle %}<strong>@{{ bot_handle }}</strong>{% else %}the bot account{% endif %}.
-        The request must be a reply so the bot can find the parent post.
-      </p>
+      <h3>Paste it above</h3>
+      <p>Drop the x.com or twitter.com link into the box. We find the attached GIF or video automatically.</p>
     </article>
     <article class="step-card">
       <span class="step-number">03</span>
-      <h3>Download MP4 or GIF</h3>
-      <p>The bot replies with a download page. Save the original MP4 instantly or convert a high-quality GIF.</p>
+      <h3>Save MP4 or GIF</h3>
+      <p>Preview the clip, download the original MP4 instantly, or convert a high-quality animated GIF.</p>
     </article>
   </div>
 </section>
@@ -128,9 +158,20 @@
       <span class="feature-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 3h10a2 2 0 0 1 2 2v14l-7-3-7 3V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg>
       </span>
-      <h3>No duplicate replies</h3>
-      <p>The bot records every mention so retries and restarts never create duplicate replies.</p>
+      <h3>No login needed</h3>
+      <p>Paste a public link and go. No account, browser extension, or app install.</p>
     </article>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">About the tool</span>
+    <h2>A free Twitter GIF downloader for public X posts</h2>
+  </div>
+  <div class="about-copy">
+    <p>X (formerly Twitter) stores GIFs as short, silent MP4 videos. This downloader finds that MP4 on X's CDN and lets you save it at original quality, or convert it server-side into a real animated .gif for places that still require the old format.</p>
+    <p>Paste a link from x.com, twitter.com, or mobile.twitter.com. It works on iPhone, Android, and desktop with no app or browser extension. Only public posts are supported; protected, deleted, and region-restricted media cannot be downloaded.</p>
   </div>
 </section>
 
@@ -141,12 +182,16 @@
       <h2>Good to know</h2>
     </div>
     <details>
-      <summary>Why does the bot need a reply?</summary>
-      <p>X's API exposes the parent post through the reply reference. A standalone mention does not tell the bot which GIF you want.</p>
+      <summary>What links can I paste?</summary>
+      <p>Paste a public x.com or twitter.com post URL that contains <code>/status/</code> and the numeric post ID. Copy it from the original post; profile, search, and quote links can point at the wrong media.</p>
+    </details>
+    <details>
+      <summary>Do I need to mention the bot?</summary>
+      <p>No. The paste box looks up the post directly. You can still reply to a post and mention {% if bot_handle %}<strong>@{{ bot_handle }}</strong>{% else %}the bot{% endif %} if you prefer the reply flow.</p>
     </details>
     <details>
       <summary>What if the post has a video instead of a GIF?</summary>
-      <p>Videos work too. The download page always offers the original MP4, and the conversion endpoint can turn short videos into GIFs.</p>
+      <p>Videos work too. The download page always offers the original MP4, and short videos can be converted to GIFs.</p>
     </details>
     <details>
       <summary>Why is the GIF larger than the MP4?</summary>
@@ -154,7 +199,11 @@
     </details>
     <details>
       <summary>Does this work with protected or deleted posts?</summary>
-      <p>No. The bot only works with public posts whose media is still available from X's CDN.</p>
+      <p>No. Only public posts whose media is still available from X's CDN can be downloaded.</p>
+    </details>
+    <details>
+      <summary>Is it really free?</summary>
+      <p>Yes. There is no sign-up or payment. Advertising and optional tips cover server and bandwidth costs.</p>
     </details>
   </div>
 </section>
@@ -189,4 +238,61 @@
     </div>
   </div>
 </div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What links can I paste?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paste a public x.com or twitter.com post URL that contains /status/ and the numeric post ID. Copy it from the original post; profile, search, and quote links can point at the wrong media."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need to mention the bot?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The paste box looks up the post directly. You can still reply to a post and mention the bot if you prefer the reply flow."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What if the post has a video instead of a GIF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Videos work too. The download page always offers the original MP4, and short videos can be converted to GIFs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is the GIF larger than the MP4?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "GIF is an old, inefficient format. The converter limits width and frame rate for a sensible balance between quality and file size."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this work with protected or deleted posts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Only public posts whose media is still available from X's CDN can be downloaded."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it really free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. There is no sign-up or payment. Advertising and optional tips cover server and bandwidth costs."
+      }
+    }
+  ]
+}
+</script>
 {% endblock %}

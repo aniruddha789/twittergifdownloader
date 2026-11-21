@@ -72,6 +72,7 @@ class Settings:
     max_concurrent_conversions: int
     convert_rate_limit_per_minute: int
     download_rate_limit_per_minute: int
+    resolve_rate_limit_per_minute: int
     gif_cache_dir: Path | None
     gif_cache_max_bytes: int
     trust_proxy_headers: bool
@@ -149,6 +150,9 @@ class Settings:
             ),
             download_rate_limit_per_minute=_int(
                 "DOWNLOAD_RATE_LIMIT_PER_MINUTE", 60, minimum=0, maximum=600
+            ),
+            resolve_rate_limit_per_minute=_int(
+                "RESOLVE_RATE_LIMIT_PER_MINUTE", 20, minimum=0, maximum=600
             ),
             gif_cache_dir=gif_cache_dir,
             gif_cache_max_bytes=_int(

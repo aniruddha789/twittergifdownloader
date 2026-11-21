@@ -3,7 +3,7 @@
 A production-ready monorepo for an X (Twitter) GIF downloader:
 
 - `bot/` polls mentions with the X API v2, finds the parent post's animated GIF or video, and replies with a download link.
-- `web/` is a FastAPI app with a mobile-first dark UI, an instant MP4 proxy download, on-the-fly ffmpeg GIF conversion, ad slots, and a support CTA.
+- `web/` is a FastAPI app with a mobile-first dark UI, a homepage "paste a post link" resolver, an instant MP4 proxy download, on-the-fly ffmpeg GIF conversion, ad slots, and a support CTA.
 
 ```
 gif-twitter-bot/
@@ -29,6 +29,7 @@ gif-twitter-bot/
     ├── config.py
     ├── media.py
     ├── requirements.txt
+    ├── tweet.py
     ├── static/
     │   ├── app.js
     │   ├── favicon.svg
@@ -43,6 +44,10 @@ gif-twitter-bot/
 ```
 
 ## How it works
+
+Visitors can use the homepage without touching X's API: the web app extracts the post ID from a pasted `x.com`/`twitter.com` URL, looks it up through X's public syndication endpoint (no paid API credits), picks the best MP4 variant, and redirects to the standard download page. Successful lookups are cached in memory for 10 minutes.
+
+The bot flow works like this:
 
 1. A user replies to a public post containing an animated GIF or video and mentions the bot.
 2. The bot calls `GET /2/users/:id/mentions` with `since_id` from SQLite.
@@ -311,6 +316,7 @@ With a reverse proxy, set `TRUST_PROXY_HEADERS=true` only if the proxy sanitizes
 | `MAX_CONCURRENT_CONVERSIONS` | Simultaneous conversions | `2` |
 | `CONVERT_RATE_LIMIT_PER_MINUTE` | Per-IP conversion limit, `0` = unlimited | `5` |
 | `DOWNLOAD_RATE_LIMIT_PER_MINUTE` | Per-IP MP4 proxy limit, `0` = unlimited | `60` |
+| `RESOLVE_RATE_LIMIT_PER_MINUTE` | Per-IP homepage post lookups, `0` = unlimited | `20` |
 | `GIF_CACHE_DIR` | On-disk cache root, `off` = disable | `./data/gif-cache` |
 | `GIF_CACHE_MAX_BYTES` | Evict oldest cached GIFs above this size, `0` = unlimited | `2147483648` |
 | `TRUST_PROXY_HEADERS` | Honor `X-Forwarded-For` | `false` |
@@ -321,13 +327,14 @@ With a reverse proxy, set `TRUST_PROXY_HEADERS=true` only if the proxy sanitizes
 | Endpoint | Description |
 | --- | --- |
 | `GET /` | Landing page |
+| `GET /go?url=<encoded_post_url>` | Resolve a public post link and redirect to `/download` |
 | `GET /download?url=<encoded_mp4>&tweet_id=<id>` | Preview and download UI |
 | `GET /download/mp4?url=<encoded_mp4>&tweet_id=<id>` | Proxied MP4 with attachment headers |
 | `GET /convert?url=<encoded_mp4>&tweet_id=<id>` | GIF conversion (disk-cached by video hash) |
 | `GET /healthz` | Liveness / ffmpeg check |
 | `GET /privacy`, `GET /terms` | Legal pages |
 
-The web app only accepts HTTPS URLs on hosts listed in `ALLOWED_MEDIA_HOSTS`, with paths ending in `.mp4`, no credentials, and port 443. Redirects are re-validated. This prevents the proxy and converter from being used as an SSRF primitive.
+The web app only accepts HTTPS URLs on hosts listed in `ALLOWED_MEDIA_HOSTS`, with paths ending in `.mp4`, no credentials, and port 443. Redirects are re-validated. The homepage resolver only parses `x.com` and `twitter.com` post URLs and never fetches user-supplied hosts. This prevents the proxy, converter, and resolver from being used as an SSRF primitive.
 
 ## Monetization
 
@@ -362,6 +369,13 @@ The **Buy me a coffee** CTA appears under the download controls and on the landi
 - The `/healthz` endpoint returns `503` if ffmpeg is missing, so orchestrators will not route traffic to a broken converter. It also reports `gifsicle` availability without degrading health.
 
 ## Troubleshooting
+
+**Homepage says it cannot find media**
+
+- Confirm the post is public and opens while logged out.
+- Paste the full `/status/<id>` link, not a profile or search page.
+- Posts with only photos are rejected; the resolver needs an `animated_gif` or `video` attachment.
+- X occasionally rate-limits the public lookup endpoint. Wait a minute and retry.
 
 **Bot starts but never replies**
 
