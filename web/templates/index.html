@@ -176,6 +176,24 @@
 </section>
 
 <section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Guides</span>
+    <h2>Save an X GIF for the app you are using</h2>
+    <p>Short, practical guides for chat apps, old forums, phones, and desktops. Each one opens with the downloader.</p>
+  </div>
+  <div class="related-grid">
+    {% for guide in guides %}
+      <a class="feature-card link-card" href="{{ guide.path }}">
+        <h3>{{ guide.nav_label }}</h3>
+        <p>{{ guide.description }}</p>
+        <span class="link-card-cta">Read the guide &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+  <p class="section-more"><a class="text-link" href="/guides">See all guides &rarr;</a></p>
+</section>
+
+<section class="section container">
   <div class="faq">
     <div class="section-head section-head--left">
       <span class="eyebrow">Questions</span>

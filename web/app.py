@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import shutil
 import tempfile
@@ -10,6 +11,7 @@ from contextlib import asynccontextmanager, suppress
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import quote
+from xml.sax.saxutils import escape as xml_escape
 
 from config import Settings
 from fastapi import FastAPI, Query, Request
@@ -19,10 +21,12 @@ from fastapi.responses import (
     JSONResponse,
     PlainTextResponse,
     RedirectResponse,
+    Response,
     StreamingResponse,
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from landing_pages import LANDING_PAGES, LandingPage, related_pages
 from media import (
     GifCache,
     MediaClient,
@@ -228,6 +232,90 @@ def render_error(
     return response
 
 
+def landing_structured_data(page: LandingPage) -> str:
+    base = settings.public_base_url
+    graph = [
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": f"{base}/",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Guides",
+                    "item": f"{base}/guides",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": page.nav_label,
+                    "item": f"{base}{page.path}",
+                },
+            ],
+        },
+        {
+            "@type": "HowTo",
+            "name": page.title,
+            "description": page.description,
+            "totalTime": "PT1M",
+            "step": [
+                {
+                    "@type": "HowToStep",
+                    "position": index,
+                    "name": step.title,
+                    "text": step.body,
+                }
+                for index, step in enumerate(page.steps, start=1)
+            ],
+        },
+        {
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": faq.question,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": faq.answer,
+                    },
+                }
+                for faq in page.faqs
+            ],
+        },
+    ]
+    return json.dumps(
+        {"@context": "https://schema.org", "@graph": graph},
+        ensure_ascii=False,
+    )
+
+
+def render_landing(request: Request, page: LandingPage) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="landing.html",
+        context=page_context(
+            request,
+            page_title=f"{page.page_title} - {settings.site_name}",
+            page_description=page.description,
+            page=page,
+            related=related_pages(page),
+            structured_data=landing_structured_data(page),
+        ),
+    )
+
+
+def make_landing_handler(page: LandingPage):
+    async def handler(request: Request) -> HTMLResponse:
+        return render_landing(request, page)
+
+    return handler
+
+
 def client_ip(request: Request) -> str:
     if settings.trust_proxy_headers:
         forwarded = request.headers.get("x-forwarded-for", "")
@@ -261,7 +349,35 @@ async def landing_page(request: Request) -> HTMLResponse:
                 "original MP4 or convert it to a true animated GIF. Free, no sign-up, "
                 "no watermark."
             ),
+            guides=LANDING_PAGES,
         ),
+    )
+
+
+@app.get("/guides", response_class=HTMLResponse)
+async def guides_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="guides.html",
+        context=page_context(
+            request,
+            page_title=f"X GIF Guides - MP4, Discord, WhatsApp, iPhone, Android - {settings.site_name}",
+            page_description=(
+                "Practical guides for saving X (Twitter) GIFs: get the original MP4, "
+                "convert to a true .gif, and share the right format on Discord, "
+                "WhatsApp, iPhone, Android, and desktop."
+            ),
+            pages=LANDING_PAGES,
+        ),
+    )
+
+
+for _page in LANDING_PAGES:
+    app.add_api_route(
+        _page.path,
+        make_landing_handler(_page),
+        response_class=HTMLResponse,
+        name=f"landing_{_page.slug.replace('-', '_')}",
     )
 
 
@@ -530,8 +646,47 @@ async def favicon() -> FileResponse:
 @app.get("/robots.txt", include_in_schema=False)
 async def robots() -> PlainTextResponse:
     return PlainTextResponse(
-        "User-agent: *\nAllow: /\nDisallow: /go\nDisallow: /download\nDisallow: /convert\n"
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /go\n"
+        "Disallow: /download\n"
+        "Disallow: /convert\n"
+        f"Sitemap: {settings.public_base_url}/sitemap.xml\n"
     )
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap() -> Response:
+    entries = [
+        (f"{settings.public_base_url}/", None, "weekly", "1.0"),
+        (f"{settings.public_base_url}/guides", None, "weekly", "0.8"),
+    ]
+    entries.extend(
+        (f"{settings.public_base_url}{page.path}", page.updated, "monthly", "0.8")
+        for page in LANDING_PAGES
+    )
+    entries.extend(
+        [
+            (f"{settings.public_base_url}/privacy", None, "yearly", "0.3"),
+            (f"{settings.public_base_url}/terms", None, "yearly", "0.3"),
+        ]
+    )
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for loc, lastmod, changefreq, priority in entries:
+        lines.append("  <url>")
+        lines.append(f"    <loc>{xml_escape(loc)}</loc>")
+        if lastmod:
+            lines.append(f"    <lastmod>{xml_escape(lastmod)}</lastmod>")
+        lines.append(f"    <changefreq>{changefreq}</changefreq>")
+        lines.append(f"    <priority>{priority}</priority>")
+        lines.append("  </url>")
+    lines.append("</urlset>")
+
+    return Response("\n".join(lines), media_type="application/xml")
 
 
 @app.exception_handler(MediaError)

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">Guides</span>
+  </nav>
+</div>
+
+<section class="hero landing-hero container">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Guides</span>
+    <h1>Save X GIFs <span class="gradient-text">the right way</span>.</h1>
+    <p class="lede">
+      Short, practical guides for turning an X (Twitter) GIF into the file you
+      actually need: MP4 for chat, a true .gif for old apps, or a clean download
+      on your phone or desktop.
+    </p>
+
+    <form class="resolve-form" action="/go" method="get" data-resolve-form>
+      <label class="resolve-label" for="post-url">Paste an X post link</label>
+      <div class="resolve-row">
+        <div class="resolve-field">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M10 14a4 4 0 0 1 0-5.7l2.3-2.3a4 4 0 0 1 5.7 5.7l-1.3 1.3M14 10a4 4 0 0 1 0 5.7l-2.3 2.3a4 4 0 0 1-5.7-5.7l1.3-1.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <input
+            class="resolve-input"
+            id="post-url"
+            name="url"
+            type="text"
+            inputmode="url"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="https://x.com/user/status/..."
+            aria-describedby="resolve-hint"
+            required
+          >
+        </div>
+        <button class="btn btn-primary resolve-submit" type="submit">
+          <span class="resolve-submit-label">Get GIF</span>
+        </button>
+      </div>
+      <p class="resolve-hint" id="resolve-hint">Works with public posts from x.com and twitter.com.</p>
+    </form>
+  </div>
+
+  <aside class="spec-card">
+    <span class="pill">Quick answers</span>
+    <h2>Start here</h2>
+    <dl class="spec-list">
+      <div class="spec-row">
+        <dt>Chat apps</dt>
+        <dd>Save the original MP4</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Old forums</dt>
+        <dd>Convert to .gif</dd>
+      </div>
+      <div class="spec-row">
+        <dt>iPhone</dt>
+        <dd>Files, then Photos</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Android</dt>
+        <dd>Downloads folder</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Private posts</dt>
+        <dd>Not supported</dd>
+      </div>
+    </dl>
+  </aside>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">All guides</span>
+    <h2>Pick the file you need</h2>
+    <p>Every guide opens with the same downloader, so you can go from reading to saving in one step.</p>
+  </div>
+  <div class="related-grid">
+    {% for page in pages %}
+      <a class="feature-card link-card" href="{{ page.path }}">
+        <span class="pill">{{ page.eyebrow }}</span>
+        <h3>{{ page.nav_label }}</h3>
+        <p>{{ page.description }}</p>
+        <span class="link-card-cta">Read the guide &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if support_url %}
+<section class="section container">
+  <div class="support-banner">
+    <div>
+      <span class="eyebrow">Keep it running</span>
+      <h2>Support the bot</h2>
+      <p>Your support covers server costs, bandwidth, and the CPU time behind every GIF conversion.</p>
+    </div>
+    <a class="btn btn-coffee btn-lg" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
