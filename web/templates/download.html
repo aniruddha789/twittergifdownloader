@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-top">
+      <!-- AD SLOT: TOP BANNER. Paste an AdSense responsive unit or Adsterra 728x90/320x100 banner here. -->
+    </div>
+  </div>
+</div>
+
+<div class="container download-shell">
+  <a class="back-link" href="/">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    New download
+  </a>
+
+  <div class="download-grid">
+    <section class="card preview-card" aria-labelledby="preview-title">
+      <div class="card-head">
+        <div>
+          <span class="pill">X media preview</span>
+          <h2 id="preview-title" class="card-title">Your file</h2>
+        </div>
+        {% if tweet_url %}
+          <a class="text-link" href="{{ tweet_url }}" target="_blank" rel="noopener noreferrer">View post
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="video-frame">
+        <video
+          data-preview-video
+          src="{{ media_url }}"
+          controls
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="metadata"
+          aria-label="GIF or video preview"
+        >
+          Your browser cannot preview this file.
+        </video>
+        <div class="video-fallback" data-video-fallback hidden>
+          <p>Preview unavailable in this browser.</p>
+          <a class="text-link" href="{{ media_url }}" target="_blank" rel="noopener noreferrer">Open the original MP4</a>
+        </div>
+      </div>
+      <p class="preview-caption">The preview uses X's original MP4. Nothing is re-encoded until you request a GIF.</p>
+    </section>
+
+    <section class="card action-card" aria-labelledby="download-title">
+      <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Ready to save</span>
+      <h1 id="download-title">Your GIF is ready.</h1>
+      <p class="muted">
+        Download the original file instantly, or let the server convert it to a
+        high-quality animated GIF.
+      </p>
+
+      <div class="action-stack">
+        <a class="btn btn-primary btn-lg download-btn" href="{{ mp4_href }}">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </span>
+          <span class="btn-copy">
+            <strong>Download MP4</strong>
+            <small>Instant, original quality</small>
+          </span>
+        </a>
+
+        <a class="btn btn-secondary btn-lg convert-btn" id="convertBtn" href="{{ convert_href }}" data-wait-ms="120000">
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="5" width="17" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"></rect><path d="M8 14.5h2.4M8 9.5h3M14.3 9.5h1.8v5h-1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </span>
+          <span class="btn-copy">
+            <strong>Convert &amp; Download .GIF</strong>
+            <small>Palette-based ffmpeg conversion</small>
+          </span>
+          <span class="spinner" aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <p class="hint" id="convertHint">
+        GIF conversion runs on the server and can take up to a minute for large files.
+        The MP4 button is always faster.
+      </p>
+
+      <div class="utility-row">
+        <button class="btn btn-small" type="button" data-copy>Copy page link</button>
+        {% if tweet_url %}
+          <a class="btn btn-small" href="{{ tweet_url }}" target="_blank" rel="noopener noreferrer">Open on X</a>
+        {% endif %}
+      </div>
+
+      {% if support_url %}
+        <div class="support-cta">
+          <div>
+            <strong>Support the bot</strong>
+            <p>Tips keep the server and GIF conversions running.</p>
+          </div>
+          <a class="btn btn-coffee" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="ad-slot ad-slot--native" aria-label="Advertisement">
+    <span class="ad-label">Sponsored</span>
+    <div class="ad-box ad-box--native" id="ad-native">
+      <!-- AD SLOT: IN-CONTENT NATIVE AD. Paste a responsive AdSense in-article unit or Adsterra native banner here. -->
+    </div>
+  </section>
+
+  <section class="section download-tips">
+    <div class="section-head section-head--left">
+      <span class="eyebrow">Downloads</span>
+      <h2>MP4 or GIF?</h2>
+    </div>
+    <div class="tips-grid">
+      <article class="tip">
+        <h3>MP4</h3>
+        <p>Smallest file, best quality, and the format X actually serves. Use this for Discord, Slack, or editing.</p>
+      </article>
+      <article class="tip">
+        <h3>GIF</h3>
+        <p>Universally supported, but much larger. Width and frame rate are capped so the result stays practical.</p>
+      </article>
+      <article class="tip">
+        <h3>Cached for speed</h3>
+        <p>Converted GIFs are cached by video fingerprint, so repeat requests return instantly instead of re-encoding.</p>
+      </article>
+    </div>
+  </section>
+</div>
+
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-bottom">
+      <!-- AD SLOT: BOTTOM BANNER. Paste an AdSense responsive unit or Adsterra 728x90/320x100 banner here. -->
+    </div>
+  </div>
+</div>
+{% endblock %}

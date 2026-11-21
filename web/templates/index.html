@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-top">
+      <!-- AD SLOT: TOP BANNER. Paste an AdSense responsive unit or Adsterra 728x90/320x100 banner here. -->
+    </div>
+  </div>
+</div>
+
+<section class="hero container">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Free, no sign-up, no watermark</span>
+    <h1>Save any <span class="gradient-text">X GIF</span> in seconds.</h1>
+    <p class="lede">
+      Reply to a post containing a GIF and mention the bot. It replies with a fast,
+      mobile-friendly download page where you can grab the original MP4 instantly
+      or convert it to a true animated GIF.
+    </p>
+    <div class="hero-actions">
+      {% if bot_profile_url %}
+        <a class="btn btn-primary btn-lg" href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M4 4l7.2 9.5L4.4 20H7l5.4-5.2L16.8 20H20l-7.5-9.9L18.8 4h-2.6l-4.9 4.8L7.2 4H4Z" fill="currentColor"></path>
+          </svg>
+          <span>Open @{{ bot_handle }} on X</span>
+        </a>
+      {% endif %}
+      <a class="btn btn-ghost btn-lg" href="#how-it-works">See how it works</a>
+    </div>
+    <ul class="trust-row" aria-label="Highlights">
+      <li><span class="tick" aria-hidden="true"></span>Instant MP4</li>
+      <li><span class="tick" aria-hidden="true"></span>True GIF conversion</li>
+      <li><span class="tick" aria-hidden="true"></span>Works on mobile</li>
+    </ul>
+  </div>
+
+  <div class="hero-visual" aria-hidden="true">
+    <div class="mock-card">
+      <div class="mock-topbar">
+        <span class="mock-avatar"></span>
+        <span class="mock-lines"><i></i><i></i></span>
+      </div>
+      <div class="mock-video">
+        <span class="mock-gif-badge">GIF</span>
+        <span class="mock-play">
+          <svg viewBox="0 0 24 24" width="26" height="26"><path d="M9 7.5v9l7.5-4.5L9 7.5Z" fill="currentColor"></path></svg>
+        </span>
+        <span class="mock-shine"></span>
+      </div>
+      <div class="mock-reply">
+        <span class="mock-bot"></span>
+        <span>Your GIF is ready</span>
+      </div>
+      <div class="mock-actions"><span>Download MP4</span><span>Convert .GIF</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <section class="ad-slot ad-slot--native" aria-label="Advertisement">
+    <span class="ad-label">Sponsored</span>
+    <div class="ad-box ad-box--native" id="ad-native">
+      <!-- AD SLOT: IN-CONTENT NATIVE AD. Paste a responsive AdSense in-article unit or Adsterra native banner here. -->
+    </div>
+  </section>
+</div>
+
+<section class="section container" id="how-it-works">
+  <div class="section-head">
+    <span class="eyebrow">Three steps</span>
+    <h2>From post to download in under a minute.</h2>
+    <p>No accounts, browser extensions, or sketchy redirects. Just a link back to your file.</p>
+  </div>
+
+  <div class="steps">
+    <article class="step-card">
+      <span class="step-number">01</span>
+      <h3>Find a post with a GIF</h3>
+      <p>Any public X post with an animated GIF or video attachment works.</p>
+    </article>
+    <article class="step-card">
+      <span class="step-number">02</span>
+      <h3>Reply and mention the bot</h3>
+      <p>
+        Reply to that post and mention
+        {% if bot_handle %}<strong>@{{ bot_handle }}</strong>{% else %}the bot account{% endif %}.
+        The request must be a reply so the bot can find the parent post.
+      </p>
+    </article>
+    <article class="step-card">
+      <span class="step-number">03</span>
+      <h3>Download MP4 or GIF</h3>
+      <p>The bot replies with a download page. Save the original MP4 instantly or convert a high-quality GIF.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="feature-grid">
+    <article class="feature-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </span>
+      <h3>Original quality</h3>
+      <p>The MP4 comes straight from X's media CDN, with no re-encoding or compression.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 6h16M4 12h10M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="18" cy="12" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"></circle></svg>
+      </span>
+      <h3>Palette-based GIFs</h3>
+      <p>Conversions use ffmpeg palette generation for cleaner colors and smaller files.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 3h10a2 2 0 0 1 2 2v14l-7-3-7 3V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg>
+      </span>
+      <h3>No duplicate replies</h3>
+      <p>The bot records every mention so retries and restarts never create duplicate replies.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="faq">
+    <div class="section-head section-head--left">
+      <span class="eyebrow">Questions</span>
+      <h2>Good to know</h2>
+    </div>
+    <details>
+      <summary>Why does the bot need a reply?</summary>
+      <p>X's API exposes the parent post through the reply reference. A standalone mention does not tell the bot which GIF you want.</p>
+    </details>
+    <details>
+      <summary>What if the post has a video instead of a GIF?</summary>
+      <p>Videos work too. The download page always offers the original MP4, and the conversion endpoint can turn short videos into GIFs.</p>
+    </details>
+    <details>
+      <summary>Why is the GIF larger than the MP4?</summary>
+      <p>GIF is an old, inefficient format. The converter limits width and frame rate for a sensible balance between quality and file size.</p>
+    </details>
+    <details>
+      <summary>Does this work with protected or deleted posts?</summary>
+      <p>No. The bot only works with public posts whose media is still available from X's CDN.</p>
+    </details>
+  </div>
+</section>
+
+{% if support_url %}
+<section class="section container">
+  <div class="support-banner">
+    <div>
+      <span class="eyebrow">Keep it running</span>
+      <h2>Support the bot</h2>
+      <p>Your support covers server costs, bandwidth, and the CPU time behind every GIF conversion.</p>
+    </div>
+    <a class="btn btn-coffee btn-lg" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+  </div>
+</section>
+{% endif %}
+
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-bottom">
+      <!-- AD SLOT: BOTTOM BANNER. Paste an AdSense responsive unit or Adsterra 728x90/320x100 banner here. -->
+    </div>
+  </div>
+</div>
+{% endblock %}

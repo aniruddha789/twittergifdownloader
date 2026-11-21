@@ -1,0 +1,48 @@
+name: x-gif-bot
+
+services:
+  web:
+    build:
+      context: ./web
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      GIF_CACHE_DIR: /cache
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    volumes:
+      - gif-cache:/cache
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    init: true
+
+  bot:
+    build:
+      context: ./bot
+    env_file:
+      - .env
+    environment:
+      DATABASE_PATH: /data/state.db
+    volumes:
+      - bot-data:/data
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+
+volumes:
+  bot-data:
+  gif-cache:

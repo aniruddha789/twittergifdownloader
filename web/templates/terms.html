@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container legal-shell">
+  <span class="eyebrow">Legal</span>
+  <h1>Terms of use</h1>
+  <p class="legal-updated">Last updated: {{ current_year }}</p>
+
+  <div class="legal-card">
+    <h2>Use of the service</h2>
+    <p>
+      {{ site_name }} is provided as-is for downloading public media from X. You are
+      responsible for respecting copyright, X's terms, and the rights of the original
+      creator. Do not use this service to redistribute content you do not have
+      permission to use.
+    </p>
+
+    <h2>No affiliation</h2>
+    <p>
+      This service is independent and is not affiliated with, endorsed by, or
+      sponsored by X Corp.
+    </p>
+
+    <h2>Availability</h2>
+    <p>
+      Downloads depend on X's media servers and may fail if a post is deleted,
+      protected, region-restricted, or unavailable. The service may be changed or
+      stopped at any time without notice.
+    </p>
+
+    <h2>Acceptable use</h2>
+    <ul>
+      <li>Do not attempt to overload, scrape, or bypass rate limits on the service.</li>
+      <li>Do not use the service for illegal content or harassment.</li>
+      <li>Do not attempt to make the server fetch arbitrary URLs or internal network resources.</li>
+    </ul>
+
+    <h2>Limitation of liability</h2>
+    <p>
+      The service is provided without warranties of any kind. To the maximum extent
+      permitted by law, the operator is not liable for any loss arising from use of
+      the service.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      {% if contact_email %}
+        Questions about these terms can be sent to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+      {% elif bot_profile_url %}
+        Questions about these terms can be sent to <a href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">the operator's X account</a>.
+      {% else %}
+        Questions about these terms can be sent to the operator of this deployment.
+      {% endif %}
+    </p>
+  </div>
+</div>
+{% endblock %}

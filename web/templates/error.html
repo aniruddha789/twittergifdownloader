@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container error-shell">
+  <div class="card error-card">
+    <span class="error-code">{{ status_code }}</span>
+    <h1>That did not work.</h1>
+    <p class="muted">{{ error_message }}</p>
+    <div class="error-actions">
+      <a class="btn btn-primary" href="/">Back to home</a>
+      {% if bot_profile_url %}
+        <a class="btn btn-ghost" href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">Ask the bot on X</a>
+      {% endif %}
+    </div>
+    <p class="hint">
+      If the media was deleted or the post is protected, X no longer serves the file.
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container legal-shell">
+  <span class="eyebrow">Legal</span>
+  <h1>Privacy</h1>
+  <p class="legal-updated">Last updated: {{ current_year }}</p>
+
+  <div class="legal-card">
+    <h2>What this service does</h2>
+    <p>
+      {{ site_name }} turns a public X (Twitter) media URL into a downloadable MP4
+      or GIF. You do not create an account and we do not ask for your X password.
+    </p>
+
+    <h2>Data we process</h2>
+    <ul>
+      <li>The media URL and tweet ID passed in the download page link.</li>
+      <li>Standard server logs such as IP address, browser user agent, requested path, and timestamp.</li>
+      <li>Temporary copies of media files while a GIF conversion is running.</li>
+      <li>Fingerprinted copies of converted GIFs kept in a short-lived on-disk cache.</li>
+    </ul>
+    <p>
+      Temporary working files are deleted immediately after the response is sent.
+      Converted GIFs may be cached by a hash of the source video to avoid re-encoding;
+      the oldest entries are purged automatically and you can request removal at any
+      time. We do not build user profiles and we do not sell personal information.
+    </p>
+
+    <h2>Cookies and advertising</h2>
+    <p>
+      This site includes advertising slots. When ad code is enabled, third-party
+      advertising partners such as Google AdSense or Adsterra may set cookies or use
+      similar technologies to measure and personalize ads. Those partners process
+      data under their own privacy policies. If you are in a region that requires
+      consent, a consent banner should be enabled before personalized advertising is
+      shown.
+    </p>
+
+    <h2>Security</h2>
+    <p>
+      Media downloads are restricted to approved X media hostnames over HTTPS. URLs
+      pointing at arbitrary hosts, private addresses, or non-video files are rejected.
+    </p>
+
+    <h2>Children</h2>
+    <p>This service is not directed at children under 13.</p>
+
+    <h2>Contact</h2>
+    <p>
+      {% if contact_email %}
+        Questions about privacy can be sent to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.
+      {% elif bot_profile_url %}
+        Questions about privacy can be sent to <a href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">the operator's X account</a>.
+      {% else %}
+        Questions about privacy can be sent to the operator of this deployment.
+      {% endif %}
+    </p>
+  </div>
+</div>
+{% endblock %}
