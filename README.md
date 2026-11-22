@@ -55,8 +55,8 @@ The bot flow works like this:
 4. It finds the parent `animated_gif` or `video` media and selects the highest-bitrate MP4 variant.
 5. It atomically claims the mention in SQLite, then replies with `BASE_WEB_URL/download?url=...&tweet_id=...`.
 6. The web app validates the URL against an X media host allowlist, shows a video preview, and offers:
-   - `/download/mp4?url=...` — streams the original MP4 with `Content-Disposition: attachment`.
-   - `/convert?url=...` — downloads to a temp directory, converts with ffmpeg `palettegen`/`paletteuse`, and streams the GIF. Successful conversions are cached on disk by a hash of the source video (plus the conversion settings), so repeat requests for the same clip — even from different tweets — are served without re-downloading or re-encoding.
+   - `/download/mp4?url=...` — downloads the clip, re-encodes it into a phone-friendly H.264 MP4, caches it, and serves it with `Content-Disposition: attachment`.
+   - `/convert?url=...` — runs an async GIF conversion (width/fps/colors stepped down to hit `GIF_TARGET_BYTES`, then gifsicle lossy optimization) and streams the result. Successful conversions are cached on disk by a hash of the source video (plus the conversion settings), so repeat requests for the same clip — even from different tweets — are served without re-downloading or re-encoding. The UI uses `/convert/start` + polling to show live progress.
 
 ### Mentions that are ignored
 
@@ -308,9 +308,15 @@ With a reverse proxy, set `TRUST_PROXY_HEADERS=true` only if the proxy sanitizes
 | `ALLOWED_MEDIA_HOSTS` | Comma-separated CDN allowlist | `video.twimg.com,pbs.twimg.com` |
 | `MAX_MEDIA_BYTES` | Upstream MP4 size cap | `31457280` |
 | `MAX_GIF_BYTES` | Converted GIF size cap | `104857600` |
-| `GIF_MAX_WIDTH` | Output GIF width cap | `640` |
-| `GIF_FPS` | Output GIF frame rate | `15` |
-| `FFMPEG_TIMEOUT_SECONDS` | Conversion timeout | `120` |
+| `GIF_MAX_WIDTH` | Output GIF width cap | `480` |
+| `GIF_FPS` | Output GIF frame rate | `12` |
+| `GIF_COLORS` | GIF palette size (16-256) | `256` |
+| `GIF_TARGET_BYTES` | Step quality down until GIFs fit, `0` = always base settings | `3145728` |
+| `FFMPEG_TIMEOUT_SECONDS` | Conversion / normalization timeout | `120` |
+| `FFPROBE_BINARY` | ffprobe binary used for conversion progress | `ffprobe` |
+| `MP4_FIX_ENABLED` | Re-encode X MP4s into phone-friendly H.264 | `true` |
+| `MP4_FIX_CRF` | Normalization quality (lower = better/larger) | `20` |
+| `MP4_FIX_MAX_BYTES` | Skip normalization above this size, `0` = no cap | `20971520` |
 | `GIFSICLE_BINARY` | Post-optimizer binary, `off` = disable | `gifsicle` |
 | `GIF_LOSSY` | gifsicle `--lossy` level, `0` = lossless `-O3` only | `60` |
 | `MAX_CONCURRENT_CONVERSIONS` | Simultaneous conversions | `2` |
@@ -329,8 +335,11 @@ With a reverse proxy, set `TRUST_PROXY_HEADERS=true` only if the proxy sanitizes
 | `GET /` | Landing page |
 | `GET /go?url=<encoded_post_url>` | Resolve a public post link and redirect to `/download` |
 | `GET /download?url=<encoded_mp4>&tweet_id=<id>` | Preview and download UI |
-| `GET /download/mp4?url=<encoded_mp4>&tweet_id=<id>` | Proxied MP4 with attachment headers |
-| `GET /convert?url=<encoded_mp4>&tweet_id=<id>` | GIF conversion (disk-cached by video hash) |
+| `GET /download/mp4?url=<encoded_mp4>&tweet_id=<id>` | MP4 normalized for Android/iOS/WhatsApp (disk-cached) |
+| `GET /convert?url=<encoded_mp4>&tweet_id=<id>` | Synchronous GIF conversion (disk-cached by video hash) |
+| `GET /convert/start?url=<encoded_mp4>&tweet_id=<id>` | Start an async GIF conversion job |
+| `GET /convert/status/<job_id>` | Poll job state, progress, and stage |
+| `GET /convert/result/<job_id>` | Download a finished job's GIF |
 | `GET /healthz` | Liveness / ffmpeg check |
 | `GET /privacy`, `GET /terms` | Legal pages |
 
@@ -363,9 +372,12 @@ The **Buy me a coffee** CTA appears under the download controls and on the landi
 - Run one web worker by default. The conversion semaphore and per-IP limiter are in-process. Scale horizontally by running multiple containers behind a proxy, not by adding uvicorn workers.
 - `MAX_MEDIA_BYTES` applies to the upstream MP4. `MAX_GIF_BYTES` applies after conversion.
 - Temporary conversion directories are removed after the response. The web app also purges stale `xgif-*` directories at startup and once per hour, which covers crashes and disconnected clients.
-- Converted GIFs are cached under `GIF_CACHE_DIR`, keyed by `sha256(source video) + GIF_FPS + GIF_MAX_WIDTH + optimizer settings`. A normalized-URL alias table avoids re-downloading the MP4 on repeat hits; the content hash deduplicates the same clip posted from different tweets. The cache is bounded by `GIF_CACHE_MAX_BYTES` and evicts the oldest entries hourly. Keep it on local disk, and give it a persistent volume in production.
-- Cached GIF responses are sent with `Cache-Control: public, max-age=31536000, immutable`, so browsers and a CDN in front of the app can reuse them without hitting the origin. Generated convert links carry a `v=` cache-busting token derived from the conversion settings, so changing `GIF_FPS`, `GIF_MAX_WIDTH`, or the optimizer config invalidates public caches automatically.
+- X's MP4 container is valid H.264 but uses a custom "vork" muxer with a non-zero edit list, negative first DTS, and variable frame timing. Chrome tolerates it, but Android Gallery, iOS, and WhatsApp often reject it. `MP4_FIX_ENABLED` re-encodes the clip to CFR H.264 (no B-frames, High@4.0, `yuv420p`, faststart) so phones accept it. Normalized MP4s are cached by `sha256(source video)` under `GIF_CACHE_DIR/mp4`, bounded to a quarter of `GIF_CACHE_MAX_BYTES`; if ffmpeg is missing or normalization fails, the original stream is served instead. Clips above `MP4_FIX_MAX_BYTES` skip normalization.
+- Converted GIFs are cached under `GIF_CACHE_DIR`, keyed by `sha256(source video) + GIF_FPS + GIF_MAX_WIDTH + GIF_COLORS + GIF_TARGET_BYTES + optimizer settings`. A normalized-URL alias table avoids re-downloading the MP4 on repeat hits; the content hash deduplicates the same clip posted from different tweets. The cache is bounded by `GIF_CACHE_MAX_BYTES` and evicts the oldest entries hourly. Keep it on local disk, and give it a persistent volume in production.
+- `GIF_TARGET_BYTES` drives a size ladder: the configured width/fps/colors are tried first, then stronger gifsicle lossy levels, then lower width/fps presets. The smallest result is kept, and if even the last preset exceeds the target it is still served (subject to `MAX_GIF_BYTES`). `gifsicle` is optional; without it the size ladder still lowers width/fps but skip the lossy passes.
+- Cached GIF and MP4 responses are sent with `Cache-Control: public, max-age=31536000, immutable`, so browsers and a CDN in front of the app can reuse them without hitting the origin. Generated convert links carry a `v=` cache-busting token derived from the conversion settings, so changing the GIF or MP4 normalization settings invalidates public caches automatically.
 - When `gifsicle` is installed, each ffmpeg result is post-optimized with `-O3 --lossy=$GIF_LOSSY`. This is best-effort: if gifsicle is missing, fails, or produces a larger file, the original ffmpeg output is kept.
+- GIF conversions run as in-process jobs (`/convert/start` + `/convert/status`) so the UI can show live ffmpeg progress. Jobs are deduplicated per source URL while active and pruned after an hour. The synchronous `/convert` endpoint remains for direct links.
 - The `/healthz` endpoint returns `503` if ffmpeg is missing, so orchestrators will not route traffic to a broken converter. It also reports `gifsicle` availability without degrading health.
 
 ## Troubleshooting

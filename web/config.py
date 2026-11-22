@@ -65,8 +65,14 @@ class Settings:
     max_gif_bytes: int
     gif_max_width: int
     gif_fps: int
+    gif_colors: int
+    gif_target_bytes: int
+    mp4_fix_enabled: bool
+    mp4_fix_crf: int
+    mp4_fix_max_bytes: int
     ffmpeg_timeout_seconds: int
     ffmpeg_binary: str
+    ffprobe_binary: str
     gifsicle_binary: str | None
     gif_lossy: int
     max_concurrent_conversions: int
@@ -134,12 +140,23 @@ class Settings:
             max_gif_bytes=_int(
                 "MAX_GIF_BYTES", 100 * 1024 * 1024, minimum=1024 * 1024
             ),
-            gif_max_width=_int("GIF_MAX_WIDTH", 640, minimum=120, maximum=1920),
-            gif_fps=_int("GIF_FPS", 15, minimum=5, maximum=30),
+            gif_max_width=_int("GIF_MAX_WIDTH", 480, minimum=120, maximum=1920),
+            gif_fps=_int("GIF_FPS", 12, minimum=5, maximum=30),
+            gif_colors=_int("GIF_COLORS", 256, minimum=16, maximum=256),
+            gif_target_bytes=_int(
+                "GIF_TARGET_BYTES", 3 * 1024 * 1024, minimum=0
+            ),
+            mp4_fix_enabled=_bool("MP4_FIX_ENABLED", True),
+            mp4_fix_crf=_int("MP4_FIX_CRF", 20, minimum=0, maximum=51),
+            mp4_fix_max_bytes=_int(
+                "MP4_FIX_MAX_BYTES", 20 * 1024 * 1024, minimum=0
+            ),
             ffmpeg_timeout_seconds=_int(
                 "FFMPEG_TIMEOUT_SECONDS", 120, minimum=10, maximum=600
             ),
             ffmpeg_binary=os.getenv("FFMPEG_BINARY", "ffmpeg").strip() or "ffmpeg",
+            ffprobe_binary=os.getenv("FFPROBE_BINARY", "ffprobe").strip()
+            or "ffprobe",
             gifsicle_binary=gifsicle_binary,
             gif_lossy=_int("GIF_LOSSY", 60, minimum=0, maximum=200),
             max_concurrent_conversions=_int(

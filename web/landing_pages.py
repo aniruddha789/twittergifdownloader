@@ -58,14 +58,14 @@ LANDING_PAGES: tuple[LandingPage, ...] = (
         eyebrow="Format guide",
         lede=(
             "Every GIF on X is really a short, silent MP4. Paste a post link and "
-            "this downloader saves that original file instead of re-recording it, "
-            "so the quality stays identical to what plays on X."
+            "this downloader grabs that MP4 and normalizes it so Android, iPhone, "
+            "and WhatsApp can open it, while the picture looks the same as on X."
         ),
         specs=(
-            ("What you download", "The original MP4 from X's CDN"),
+            ("What you download", "The MP4 from X's CDN, normalized for phones"),
             ("Video format", "H.264 MP4, silent for GIF posts"),
             ("Audio", "None for animated GIF posts"),
-            ("Quality", "Unchanged, no re-encode"),
+            ("Quality", "Visually unchanged"),
             ("Typical size", "About 0.3 to 5 MB for a short clip"),
             ("Platforms", "iPhone, Android, Windows, macOS"),
         ),
@@ -131,8 +131,10 @@ LANDING_PAGES: tuple[LandingPage, ...] = (
             ),
             Faq(
                 "Does downloading an MP4 reduce quality?",
-                "No. The file is streamed from X's CDN as-is. Nothing is re-encoded "
-                "unless you request a GIF.",
+                "Not noticeably. The MP4 is re-encoded once with a high-quality "
+                "H.264 preset so Android Gallery, iOS, and WhatsApp can open it, "
+                "and the result looks the same as on X. Converting to GIF is a "
+                "separate, more noticeable re-encode.",
             ),
             Faq(
                 "Can I download from a private account?",
@@ -895,7 +897,7 @@ LANDING_PAGES: tuple[LandingPage, ...] = (
         specs=(
             ("Where they live", "Reply posts and quote posts"),
             ("Link to copy", "The reply's /status/ URL"),
-            ("Default download", "Original MP4, no watermark"),
+            ("Default download", "Phone-friendly MP4, no watermark"),
             ("Converted GIF", "Palette-based, width-capped"),
             ("Public posts only", "Yes"),
             ("Multiple attachments", "The animated one is selected"),

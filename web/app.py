@@ -6,7 +6,7 @@ import logging
 import shutil
 import tempfile
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager, suppress
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,8 +27,9 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from landing_pages import LANDING_PAGES, LandingPage, related_pages
+from jobs import ConversionResult, JobManager
 from media import (
-    GifCache,
+    MediaCache,
     MediaClient,
     MediaError,
     SlidingWindowRateLimiter,
@@ -57,17 +58,97 @@ STATIC_DIR = WEB_ROOT / "static"
 templates = Jinja2Templates(directory=str(WEB_ROOT / "templates"))
 
 media_client = MediaClient(settings)
-gif_cache = GifCache(
+gif_cache = MediaCache(
     settings.gif_cache_dir,
     settings.gif_cache_max_bytes,
-    gif_fps=settings.gif_fps,
-    gif_max_width=settings.gif_max_width,
-    extra=(
-        f"lossy{settings.gif_lossy}"
-        if media_client.gifsicle_available()
-        else "noopt"
+    subdir="gif",
+    url_subdir="url",
+    tmp_subdir="tmp",
+    extension="gif",
+    settings_token=(
+        f"gif:v2:{settings.gif_fps}:{settings.gif_max_width}:"
+        f"{settings.gif_colors}:{settings.gif_target_bytes}:"
+        f"lossy{settings.gif_lossy if media_client.gifsicle_available() else 'noopt'}"
     ),
 )
+mp4_cache = MediaCache(
+    settings.gif_cache_dir,
+    settings.gif_cache_max_bytes // 4 if settings.gif_cache_max_bytes > 0 else 0,
+    subdir="mp4",
+    url_subdir="mp4-url",
+    tmp_subdir="mp4-tmp",
+    extension="mp4",
+    settings_token=f"mp4:v1:{settings.mp4_fix_enabled}:{settings.mp4_fix_crf}",
+)
+
+
+async def build_gif(
+    media_url: str,
+    tweet_id: str | None,
+    progress: Callable[[float], None] | None = None,
+) -> ConversionResult:
+    cached = gif_cache.lookup_by_url(media_url)
+    if cached is not None:
+        log.info("GIF cache hit (url) for tweet %s", tweet_id)
+        return ConversionResult(cached, True)
+
+    if not await media_client.acquire_slot():
+        raise MediaError(
+            "The GIF converter is busy right now. Please try again in a few seconds.",
+            503,
+        )
+
+    temp_dir = Path(tempfile.mkdtemp(prefix="xgif-"))
+    input_path = temp_dir / "input.mp4"
+    cache_tmp: Path | None = None
+    keep_temp = False
+
+    def download_progress(fraction: float) -> None:
+        if progress is not None:
+            progress(max(0.0, min(1.0, fraction)) * 0.15)
+
+    def convert_progress(fraction: float) -> None:
+        if progress is not None:
+            progress(0.15 + max(0.0, min(1.0, fraction)) * 0.85)
+
+    try:
+        _, content_hash = await media_client.download_to_file(
+            media_url, input_path, progress=download_progress if progress else None
+        )
+
+        cached = gif_cache.path_for_content(content_hash)
+        if cached is not None:
+            log.info("GIF cache hit (content) for tweet %s", tweet_id)
+            gif_cache.record_url(media_url, content_hash)
+            return ConversionResult(cached, True)
+
+        cache_tmp = gif_cache.new_temp_path()
+        output_path = cache_tmp if cache_tmp is not None else temp_dir / "output.gif"
+        await media_client.convert_to_gif(
+            input_path,
+            output_path,
+            progress=convert_progress if progress else None,
+        )
+
+        if cache_tmp is not None:
+            output_path = gif_cache.commit(content_hash, cache_tmp)
+            cache_tmp = None
+            gif_cache.record_url(media_url, content_hash)
+            log.info("Cached GIF for tweet %s (%s)", tweet_id, content_hash[:12])
+            return ConversionResult(output_path, True)
+
+        keep_temp = True
+        return ConversionResult(output_path, False, delete_dir=temp_dir)
+    finally:
+        if cache_tmp is not None:
+            gif_cache.discard(cache_tmp)
+        if not keep_temp:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        media_client.release_slot()
+
+
+jobs = JobManager(settings, media_client, gif_cache, build_gif)
+
 conversion_limiter = SlidingWindowRateLimiter(settings.convert_rate_limit_per_minute)
 download_limiter = SlidingWindowRateLimiter(settings.download_rate_limit_per_minute)
 resolve_limiter = SlidingWindowRateLimiter(settings.resolve_rate_limit_per_minute)
@@ -87,12 +168,14 @@ def cleanup_stale_temp_dirs(max_age_seconds: int = 3600) -> None:
 def run_maintenance() -> None:
     cleanup_stale_temp_dirs()
     gif_cache.evict()
+    mp4_cache.evict()
 
 
 async def cleanup_temp_loop() -> None:
     while True:
         await asyncio.sleep(3600)
         await asyncio.to_thread(run_maintenance)
+        jobs.cleanup()
 
 
 @asynccontextmanager
@@ -450,6 +533,7 @@ async def download_page(
             ),
             mp4_href=f"/download/mp4{query}",
             convert_href=f"/convert{convert_query}",
+            start_href=f"/convert/start{convert_query}",
         ),
     )
 
@@ -472,11 +556,107 @@ async def download_mp4(
                 ),
                 retry_after=60,
             )
-        upstream = await media_client.open_stream(media_url)
     except MediaError as exc:
         return render_error(request, exc)
 
-    filename = attachment_filename(clean_tweet_id, "mp4")
+    async def stream_original():
+        upstream = await media_client.open_stream(media_url)
+        return stream_mp4_response(upstream, clean_tweet_id)
+
+    if not settings.mp4_fix_enabled or not media_client.ffmpeg_available():
+        try:
+            return await stream_original()
+        except MediaError as exc:
+            return render_error(request, exc)
+
+    cached = mp4_cache.lookup_by_url(media_url)
+    if cached is not None:
+        log.info("MP4 cache hit (url) for tweet %s", clean_tweet_id)
+        return mp4_response(cached, clean_tweet_id, cacheable=True)
+
+    if not await media_client.acquire_slot():
+        try:
+            return await stream_original()
+        except MediaError as exc:
+            return render_error(request, exc)
+
+    temp_dir = Path(tempfile.mkdtemp(prefix="xgif-"))
+    input_path = temp_dir / "input.mp4"
+    cache_tmp: Path | None = None
+    keep_temp = False
+    downloaded = False
+
+    try:
+        _, content_hash = await media_client.download_to_file(media_url, input_path)
+        downloaded = True
+
+        if (
+            settings.mp4_fix_max_bytes > 0
+            and input_path.stat().st_size > settings.mp4_fix_max_bytes
+        ):
+            log.info(
+                "Skipping MP4 normalization for tweet %s (%s bytes exceeds cap)",
+                clean_tweet_id,
+                input_path.stat().st_size,
+            )
+            keep_temp = True
+            return mp4_response(input_path, clean_tweet_id, delete_dir=temp_dir)
+
+        cached = mp4_cache.path_for_content(content_hash)
+        if cached is not None:
+            log.info("MP4 cache hit (content) for tweet %s", clean_tweet_id)
+            mp4_cache.record_url(media_url, content_hash)
+            return mp4_response(cached, clean_tweet_id, cacheable=True)
+
+        cache_tmp = mp4_cache.new_temp_path()
+        output_path = cache_tmp if cache_tmp is not None else temp_dir / "output.mp4"
+        await media_client.normalize_mp4(input_path, output_path)
+
+        if cache_tmp is not None:
+            output_path = mp4_cache.commit(content_hash, cache_tmp)
+            cache_tmp = None
+            mp4_cache.record_url(media_url, content_hash)
+            log.info(
+                "Cached normalized MP4 for tweet %s (%s)",
+                clean_tweet_id,
+                content_hash[:12],
+            )
+            return mp4_response(output_path, clean_tweet_id, cacheable=True)
+
+        keep_temp = True
+        return mp4_response(output_path, clean_tweet_id, delete_dir=temp_dir)
+    except MediaError as exc:
+        log.warning(
+            "MP4 normalization failed for tweet %s: %s; serving original",
+            clean_tweet_id,
+            exc.message,
+        )
+        if downloaded and input_path.exists() and input_path.stat().st_size > 0:
+            keep_temp = True
+            return mp4_response(input_path, clean_tweet_id, delete_dir=temp_dir)
+        try:
+            return await stream_original()
+        except MediaError as stream_exc:
+            return render_error(request, stream_exc)
+    except Exception:
+        log.exception("Unexpected MP4 normalization failure")
+        if downloaded and input_path.exists() and input_path.stat().st_size > 0:
+            keep_temp = True
+            return mp4_response(input_path, clean_tweet_id, delete_dir=temp_dir)
+        return render_error(
+            request,
+            MediaError("MP4 download failed. Please try again.", 500),
+        )
+    finally:
+        if cache_tmp is not None:
+            mp4_cache.discard(cache_tmp)
+        if not keep_temp:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        media_client.release_slot()
+
+
+def stream_mp4_response(upstream, tweet_id: str | None) -> StreamingResponse:
+    filename = attachment_filename(tweet_id, "mp4")
     headers = {
         "Content-Disposition": f'attachment; filename="{filename}"',
         "Cache-Control": "private, no-store, max-age=0",
@@ -487,6 +667,35 @@ async def download_mp4(
         logged_stream(upstream),
         media_type="video/mp4",
         headers=headers,
+    )
+
+
+def mp4_response(
+    path: Path,
+    tweet_id: str | None,
+    *,
+    cacheable: bool = False,
+    delete_dir: Path | None = None,
+) -> FileResponse:
+    headers = {
+        "Cache-Control": (
+            "public, max-age=31536000, immutable"
+            if cacheable
+            else "private, no-store, max-age=0"
+        ),
+        "X-Content-Type-Options": "nosniff",
+    }
+    background = (
+        BackgroundTask(shutil.rmtree, delete_dir, ignore_errors=True)
+        if delete_dir is not None
+        else None
+    )
+    return FileResponse(
+        path,
+        media_type="video/mp4",
+        filename=attachment_filename(tweet_id, "mp4"),
+        headers=headers,
+        background=background,
     )
 
 
@@ -541,62 +750,81 @@ async def convert_to_gif(
             retry_after=60,
         )
 
-    cached = gif_cache.lookup_by_url(media_url)
-    if cached is not None:
-        log.info("GIF cache hit (url) for tweet %s", clean_tweet_id)
-        return gif_response(cached, clean_tweet_id, cacheable=True)
-
-    if not await media_client.acquire_slot():
-        return render_error(
-            request,
-            MediaError(
-                "The GIF converter is busy right now. Please try again in a few seconds.",
-                503,
-            ),
-            retry_after=10,
-        )
-
-    temp_dir = Path(tempfile.mkdtemp(prefix="xgif-"))
-    input_path = temp_dir / "input.mp4"
-    cache_tmp: Path | None = None
-
     try:
-        _, content_hash = await media_client.download_to_file(media_url, input_path)
-
-        cached = gif_cache.path_for_content(content_hash)
-        if cached is not None:
-            log.info("GIF cache hit (content) for tweet %s", clean_tweet_id)
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            gif_cache.record_url(media_url, content_hash)
-            return gif_response(cached, clean_tweet_id, cacheable=True)
-
-        cache_tmp = gif_cache.new_temp_path()
-        output_path = cache_tmp if cache_tmp is not None else temp_dir / "output.gif"
-        await media_client.convert_to_gif(input_path, output_path)
-
-        if cache_tmp is not None:
-            output_path = gif_cache.commit(content_hash, cache_tmp)
-            gif_cache.record_url(media_url, content_hash)
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            log.info("Cached GIF for tweet %s (%s)", clean_tweet_id, content_hash[:12])
-            return gif_response(output_path, clean_tweet_id, cacheable=True)
+        result = await build_gif(media_url, clean_tweet_id)
     except MediaError as exc:
-        log.warning("Conversion failed for tweet %s: %s", clean_tweet_id, exc.message)
-        gif_cache.discard(cache_tmp)
-        shutil.rmtree(temp_dir, ignore_errors=True)
         return render_error(request, exc)
     except Exception:
         log.exception("Unexpected GIF conversion failure")
-        gif_cache.discard(cache_tmp)
-        shutil.rmtree(temp_dir, ignore_errors=True)
         return render_error(
             request,
             MediaError("GIF conversion failed unexpectedly. Try the MP4 download.", 500),
         )
-    finally:
-        media_client.release_slot()
 
-    return gif_response(output_path, clean_tweet_id, delete_dir=temp_dir)
+    return gif_response(
+        result.path,
+        clean_tweet_id,
+        cacheable=result.cacheable,
+        delete_dir=result.delete_dir,
+    )
+
+
+@app.get("/convert/start", include_in_schema=False)
+async def convert_start(
+    request: Request,
+    url: str = Query(default=""),
+    tweet_id: str | None = Query(default=None),
+):
+    try:
+        media_url = validate_media_url(url, settings.allowed_media_hosts)
+        clean_tweet_id = validate_tweet_id(tweet_id)
+    except MediaError as exc:
+        return JSONResponse({"detail": exc.message}, status_code=exc.status_code)
+
+    if not conversion_limiter.allow(client_ip(request)):
+        return JSONResponse(
+            {
+                "detail": (
+                    "Too many GIF conversions from this connection. "
+                    "Please wait a minute."
+                )
+            },
+            status_code=429,
+            headers={"Retry-After": "60"},
+        )
+
+    job = jobs.start(media_url, clean_tweet_id)
+    return JSONResponse(job.public(), status_code=202)
+
+
+@app.get("/convert/status/{job_id}", include_in_schema=False)
+async def convert_status(job_id: str):
+    job = jobs.get(job_id)
+    if job is None:
+        return JSONResponse(
+            {"detail": "Unknown or expired conversion job."}, status_code=404
+        )
+    return JSONResponse(job.public())
+
+
+@app.get("/convert/result/{job_id}", include_in_schema=False)
+async def convert_result(job_id: str):
+    job = jobs.get(job_id)
+    if (
+        job is None
+        or job.status != "done"
+        or job.result_path is None
+        or not job.result_path.is_file()
+    ):
+        return JSONResponse(
+            {"detail": "This GIF is not ready or has expired."}, status_code=404
+        )
+    return gif_response(
+        job.result_path,
+        job.tweet_id,
+        cacheable=job.delete_dir is None,
+        delete_dir=job.delete_dir,
+    )
 
 
 @app.get("/privacy", response_class=HTMLResponse)
