@@ -104,6 +104,24 @@
         {% endif %}
       </div>
 
+      {% if handoff_tools %}
+        <div class="handoff-box" aria-labelledby="handoff-title">
+          <div class="handoff-head">
+            <span class="pill">Browser Studio · No Re-upload</span>
+            <h2 id="handoff-title" class="handoff-title">Fit this clip for Discord or Slack</h2>
+            <p class="handoff-sub">Crop 1:1 &amp; auto-compress in your browser tab:</p>
+          </div>
+          <div class="handoff-grid">
+            {% for item in handoff_tools %}
+              <a class="handoff-link" href="{{ item.href }}">
+                <strong>{{ item.short_action }}</strong>
+                <small>{{ item.spec }}</small>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
       {% if support_url %}
         <div class="support-cta">
           <div>

@@ -1565,6 +1565,565 @@ button:focus-visible {
   margin-top: 1rem;
 }
 
+/* Browser GIF Studio & Micro-Tools */
+.tool-header {
+  padding-top: clamp(1.3rem, 3vw, 2.2rem);
+  padding-bottom: 1.2rem;
+}
+
+.tool-header h1 {
+  max-width: 24ch;
+  margin-bottom: 0.75rem;
+  font-size: clamp(2rem, 5.2vw, 3.25rem);
+  line-height: 1.04;
+}
+
+.tool-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+
+.tool-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(18, 24, 39, 0.6);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.tool-tab:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.tool-tab.is-active {
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(34, 211, 238, 0.13);
+  color: #67e8f9;
+}
+
+.studio-shell {
+  padding-bottom: 1.8rem;
+}
+
+.studio-grid {
+  display: grid;
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.studio-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.studio-dropzone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1.5px dashed rgba(34, 211, 238, 0.38);
+  border-radius: 16px;
+  background: rgba(11, 16, 28, 0.72);
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.studio-dropzone:hover,
+.studio-dropzone.is-dragover {
+  border-color: var(--brand-2);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.studio-drop-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.16);
+  color: #c4b5fd;
+}
+
+.studio-drop-copy {
+  display: flex;
+  flex: 1 1 200px;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.studio-drop-copy strong {
+  font-size: 0.9rem;
+}
+
+.studio-drop-copy span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.studio-source-status {
+  margin: -0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.studio-stage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.studio-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.studio-stage-head .resolve-label {
+  margin-bottom: 0;
+}
+
+.studio-crop-canvas {
+  width: 100%;
+  max-height: 270px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: #080b12;
+  cursor: grab;
+  touch-action: none;
+}
+
+.studio-crop-canvas:active {
+  cursor: grabbing;
+}
+
+.studio-crop-hint {
+  margin: 0;
+  color: var(--muted-2);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.studio-controls-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.studio-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.studio-control-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.studio-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.studio-pill {
+  padding: 0.42rem 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(7, 9, 15, 0.7);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.studio-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.studio-pill.is-active {
+  border-color: rgba(34, 211, 238, 0.65);
+  background: rgba(34, 211, 238, 0.15);
+  color: #67e8f9;
+}
+
+.studio-slider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.studio-slider-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.studio-slider-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.studio-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.studio-slider-head strong {
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.studio-slider-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--brand-2);
+  cursor: pointer;
+}
+
+.studio-trim-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.studio-status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(7, 10, 18, 0.75);
+}
+
+.studio-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.studio-badge--ok {
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.14);
+  color: #6ee7b7;
+}
+
+.studio-badge--warn {
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  background: rgba(251, 113, 133, 0.14);
+  color: #fda4af;
+}
+
+.studio-badge--busy {
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
+}
+
+.studio-telemetry {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.77rem;
+}
+
+.chat-preview-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.chat-sim {
+  position: relative;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.chat-sim--dark {
+  background: #313338;
+  color: #dbdee1;
+}
+
+.chat-sim--dark.chat-sim--slack {
+  background: #1a1d21;
+  color: #d1d2d3;
+}
+
+.chat-sim--light {
+  background: #ffffff;
+  color: #1f2328;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.chat-sim-tag {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.7rem;
+  padding: 0.12rem 0.48rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  color: #cbd5e1;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.chat-sim--light .chat-sim-tag {
+  background: rgba(15, 23, 42, 0.08);
+  color: #475569;
+}
+
+.chat-sim-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.chat-sim-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+}
+
+.chat-sim-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chat-sim-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.78rem;
+}
+
+.chat-sim-meta span {
+  opacity: 0.62;
+  font-size: 0.68rem;
+}
+
+.chat-sim-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.84rem;
+}
+
+.chat-preview-inline {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
+.chat-sim-jumbo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chat-preview-jumbo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.chat-preview-native {
+  width: 72px;
+  height: 72px;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.chat-sim-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.14);
+  font-size: 0.76rem;
+}
+
+.chat-preview-reaction {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.chat-sim-sticker-wrap {
+  margin-top: 0.3rem;
+}
+
+.chat-preview-sticker {
+  width: 140px;
+  height: 140px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.chat-sim-embed-wrap {
+  margin-top: 0.35rem;
+}
+
+.chat-preview-embed {
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.studio-override-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(11, 15, 25, 0.62);
+}
+
+.studio-autofit-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.studio-autofit-toggle input {
+  margin-top: 0.22rem;
+  accent-color: var(--brand-2);
+}
+
+.studio-autofit-toggle strong {
+  display: block;
+  font-size: 0.84rem;
+}
+
+.studio-autofit-toggle small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.studio-download-btn {
+  flex: 1 1 240px;
+}
+
+.tool-specs-and-copy {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* One-tap Handoff Box on /download */
+.handoff-box {
+  margin-top: 1.35rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  border-radius: 16px;
+  background:
+    radial-gradient(450px 140px at 100% 0%, rgba(34, 211, 238, 0.1), transparent 70%),
+    rgba(11, 16, 28, 0.72);
+}
+
+.handoff-head {
+  margin-bottom: 0.75rem;
+}
+
+.handoff-title {
+  margin: 0.45rem 0 0.15rem;
+  font-size: 1.02rem;
+}
+
+.handoff-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.handoff-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.handoff-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: rgba(18, 24, 39, 0.75);
+  text-decoration: none;
+  transition:
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.handoff-link:hover {
+  border-color: rgba(34, 211, 238, 0.55);
+  transform: translateY(-1px);
+}
+
+.handoff-link strong {
+  color: #67e8f9;
+  font-size: 0.79rem;
+}
+
+.handoff-link small {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
 /* Responsive */
 @media (min-width: 700px) {
   .steps,
@@ -1572,6 +2131,11 @@ button:focus-visible {
   .tips-grid,
   .related-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .related-grid--two,
+  .chat-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ad-box--native {
@@ -1605,9 +2169,15 @@ button:focus-visible {
     gap: 3.5rem;
   }
 
-  .download-grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+  .download-grid,
+  .studio-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.3rem;
+  }
+
+  .tool-specs-and-copy {
+    grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+    gap: 2rem;
   }
 
   .preview-card {
@@ -1617,6 +2187,10 @@ button:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .studio-slider-grid--three,
+  .handoff-grid {
+    grid-template-columns: 1fr;
+  }
   .header-inner {
     min-height: 62px;
   }

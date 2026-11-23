@@ -142,6 +142,25 @@
   </div>
 </section>
 
+{% if tools %}
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">100% Browser Tools</span>
+    <h2>Emoji, sticker &amp; GIF compressor tools</h2>
+  </div>
+  <div class="related-grid">
+    {% for item in tools %}
+      <a class="feature-card link-card" href="{{ item.path }}">
+        <span class="pill">{{ item.preset.platform_name }} · &lt;{{ item.preset.target_kb }} KB</span>
+        <h3>{{ item.nav_label }}</h3>
+        <p>{{ item.description }}</p>
+        <span class="link-card-cta">Open tool &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {% if related %}
 <section class="section container">
   <div class="section-head section-head--left">

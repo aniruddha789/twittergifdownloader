@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">Tools</span>
+  </nav>
+</div>
+
+<section class="hero landing-hero container">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>100% Browser Tools · Zero Upload</span>
+    <h1>Free GIF &amp; Emoji <span class="gradient-text">Micro-Tools</span>.</h1>
+    <p class="lede">
+      Crop, resize, and auto-compress animated GIFs and X (Twitter) MP4 clips
+      to fit strict Discord and Slack byte limits—entirely inside your browser
+      with zero server uploads.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" href="/discord-emoji-maker">Discord Emoji Maker (&lt;256 KB)</a>
+      <a class="btn btn-ghost btn-lg" href="/discord-gif-compressor">Discord GIF Compressor</a>
+    </div>
+
+    <ul class="trust-row" aria-label="Highlights">
+      <li><span class="tick" aria-hidden="true"></span>Runs locally in your tab</li>
+      <li><span class="tick" aria-hidden="true"></span>Auto-fits 128 KB / 256 KB / 512 KB</li>
+      <li><span class="tick" aria-hidden="true"></span>Live dark &amp; light chat preview</li>
+    </ul>
+  </div>
+
+  <aside class="spec-card">
+    <span class="pill">Platform limits</span>
+    <h2>Cheat sheet</h2>
+    <dl class="spec-list">
+      <div class="spec-row">
+        <dt>Discord Emoji</dt>
+        <dd>128×128 px · &lt; 256 KB</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Discord Sticker</dt>
+        <dd>320×320 px · &lt; 512 KB</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Slack Emoji</dt>
+        <dd>128×128 px · &lt; 128 KB · ≤50f</dd>
+      </div>
+      <div class="spec-row">
+        <dt>Discord Chat GIF</dt>
+        <dd>Original ratio · &lt; 8 MB</dd>
+      </div>
+      <div class="spec-row">
+        <dt>X / Twitter Clip</dt>
+        <dd>One-tap handoff from /download</dd>
+      </div>
+    </dl>
+  </aside>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Browser studio suite</span>
+    <h2>Pick a tool for your destination</h2>
+    <p>Each tool automatically steps down color palettes, frame rate, and dimensions until your GIF fits the platform limit.</p>
+  </div>
+  <div class="related-grid related-grid--two">
+    {% for item in tools %}
+      <a class="feature-card link-card" href="{{ item.path }}">
+        <span class="pill">{{ item.preset.platform_name }} · &lt;{{ item.preset.target_kb }} KB</span>
+        <h3>{{ item.nav_label }}</h3>
+        <p>{{ item.description }}</p>
+        <span class="link-card-cta">Open {{ item.nav_label }} &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Starting from X (Twitter)?</span>
+    <h2>Paste an X post link first, then send it to any tool</h2>
+    <p>Resolve any public X post below. On the download page you can send the clip straight into the Discord or Slack studio with one tap.</p>
+  </div>
+  <form class="resolve-form" action="/go" method="get" data-resolve-form>
+    <label class="resolve-label" for="post-url">Paste an X post link</label>
+    <div class="resolve-row">
+      <div class="resolve-field">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="M10 14a4 4 0 0 1 0-5.7l2.3-2.3a4 4 0 0 1 5.7 5.7l-1.3 1.3M14 10a4 4 0 0 1 0 5.7l-2.3 2.3a4 4 0 0 1-5.7-5.7l1.3-1.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <input
+          class="resolve-input"
+          id="post-url"
+          name="url"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="https://x.com/user/status/..."
+          required
+        >
+      </div>
+      <button class="btn btn-primary resolve-submit" type="submit">
+        <span class="resolve-submit-label">Get GIF</span>
+      </button>
+    </div>
+  </form>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Guides</span>
+    <h2>How-to guides &amp; platform specs</h2>
+  </div>
+  <div class="related-grid">
+    {% for guide in guides %}
+      <a class="feature-card link-card" href="{{ guide.path }}">
+        <span class="pill">{{ guide.eyebrow }}</span>
+        <h3>{{ guide.nav_label }}</h3>
+        <p>{{ guide.description }}</p>
+        <span class="link-card-cta">Read the guide &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

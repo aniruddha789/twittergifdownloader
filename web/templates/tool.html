@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-top">
+      <script>
+        atOptions = {
+          'key' : '41c37e4adf66ea41893e68a48699c9b3',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      </script>
+      <script src="https://bauval.org/22/41c37e4adf66ea41893e68a48699c9b3"></script>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span aria-hidden="true">/</span>
+    <a href="/tools">Tools</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ tool.nav_label }}</span>
+  </nav>
+</div>
+
+<section class="container tool-header">
+  <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>{{ tool.eyebrow }}</span>
+  <h1>{{ tool.h1_pre }}<span class="gradient-text">{{ tool.h1_highlight }}</span>{{ tool.h1_post }}</h1>
+  <p class="lede">{{ tool.lede }}</p>
+
+  <nav class="tool-switcher" aria-label="Switch GIF tool">
+    {% for item in all_tools %}
+      <a
+        class="tool-tab{% if item.slug == tool.slug %} is-active{% endif %}"
+        href="{{ item.path }}"
+        {% if item.slug == tool.slug %}aria-current="page"{% endif %}
+      >
+        {{ item.nav_label }}
+      </a>
+    {% endfor %}
+  </nav>
+</section>
+
+<section
+  class="container studio-shell"
+  id="gifStudio"
+  data-slug="{{ tool.slug }}"
+  data-preset-id="{{ tool.preset.id }}"
+  data-target-kb="{{ tool.preset.target_kb }}"
+  data-width="{{ tool.preset.width }}"
+  data-height="{{ tool.preset.height }}"
+  data-crop-mode="{{ tool.preset.crop_mode }}"
+  data-fps="{{ tool.preset.default_fps }}"
+  data-max-frames="{{ tool.preset.max_frames }}"
+  data-platform-name="{{ tool.preset.platform_name }}"
+  data-preview-style="{{ tool.preset.preview_style }}"
+>
+  <div class="studio-grid">
+    <!-- Left Column: Input, Interactive Crop Canvas & Timing -->
+    <div class="card studio-panel">
+      <div class="studio-dropzone" id="studioDropzone" role="button" tabindex="0" aria-label="Upload GIF, MP4, or WebM file">
+        <input
+          type="file"
+          id="studioFileInput"
+          accept="image/gif,video/mp4,video/webm,video/quicktime,.gif,.mp4,.webm,.mov"
+          hidden
+        >
+        <div class="studio-drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26">
+            <path d="M12 16V4m0 0-4 4m4-4 4 4M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+        <div class="studio-drop-copy">
+          <strong>Drop a GIF, MP4, or WebM here — or click to browse</strong>
+          <span>100% private in-browser processing · Need an X clip? <a href="/" class="text-link">Paste an X link first</a></span>
+        </div>
+        <button type="button" class="btn btn-small" id="studioSampleBtn">Load demo clip</button>
+      </div>
+
+      <p class="studio-source-status" id="studioSourceStatus">Initializing browser studio...</p>
+
+      <div class="studio-stage-wrap">
+        <div class="studio-stage-head">
+          <span class="resolve-label">1. Crop &amp; Frame Source</span>
+          <button type="button" class="btn btn-small" id="studioResetCrop">Reset crop</button>
+        </div>
+        <canvas
+          id="studioCropCanvas"
+          class="studio-crop-canvas"
+          width="360"
+          height="260"
+          aria-label="Interactive crop and pan preview"
+        ></canvas>
+        <p class="studio-crop-hint" id="studioCropHint">
+          Drag canvas to reposition crop · Use zoom slider to focus on the subject
+        </p>
+      </div>
+
+      <div class="studio-controls-group">
+        <div class="studio-control-row">
+          <span class="studio-control-label">Framing Mode</span>
+          <div class="studio-pills" role="group" aria-label="Framing mode">
+            <button
+              type="button"
+              class="studio-pill{% if tool.preset.crop_mode == 'square' %} is-active{% endif %}"
+              data-crop-mode="square"
+              aria-pressed="{{ 'true' if tool.preset.crop_mode == 'square' else 'false' }}"
+            >1:1 Square Crop</button>
+            <button
+              type="button"
+              class="studio-pill"
+              data-crop-mode="fit"
+              aria-pressed="false"
+            >1:1 Fit (Pad)</button>
+            <button
+              type="button"
+              class="studio-pill{% if tool.preset.crop_mode == 'original' %} is-active{% endif %}"
+              data-crop-mode="original"
+              aria-pressed="{{ 'true' if tool.preset.crop_mode == 'original' else 'false' }}"
+            >Original Ratio</button>
+          </div>
+        </div>
+
+        <div class="studio-slider-grid">
+          <label class="studio-slider-field" for="studioZoom">
+            <span class="studio-slider-head">
+              <span>Zoom Crop</span>
+              <strong id="studioZoomValue">1.0×</strong>
+            </span>
+            <input type="range" id="studioZoom" min="1" max="3" step="0.05" value="1">
+          </label>
+
+          <label class="studio-slider-field" for="studioSpeed">
+            <span class="studio-slider-head">
+              <span>Playback Speed</span>
+              <strong id="studioSpeedValue">1.00×</strong>
+            </span>
+            <input type="range" id="studioSpeed" min="0.5" max="2.0" step="0.25" value="1">
+          </label>
+        </div>
+
+        <div class="studio-slider-field">
+          <span class="studio-slider-head">
+            <span>Trim Clip Range (shorter clips = sharper GIFs)</span>
+            <strong id="studioTrimValue">0.0s – 1.2s</strong>
+          </span>
+          <div class="studio-trim-pair">
+            <input type="range" id="studioTrimStart" min="0" max="5" step="0.1" value="0" aria-label="Trim start seconds">
+            <input type="range" id="studioTrimEnd" min="0" max="5" step="0.1" value="1.2" aria-label="Trim end seconds">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Target Size Budget, Dark/Light Chat Preview & Output -->
+    <div class="card studio-panel">
+      <div class="studio-budget-block">
+        <span class="resolve-label">2. Target File Size Ceiling</span>
+        <div class="studio-pills" role="group" aria-label="Target file size budget">
+          {% for kb, label in tool.budget_options_kb %}
+            <button
+              type="button"
+              class="studio-pill{% if loop.first %} is-active{% endif %}"
+              data-budget-kb="{{ kb }}"
+              aria-pressed="{{ 'true' if loop.first else 'false' }}"
+            >{{ label }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="studio-status-bar">
+        <div class="studio-badge studio-badge--busy" id="studioSizeBadge" role="status" aria-live="polite">
+          Preparing GIF optimizer...
+        </div>
+        <p class="studio-telemetry" id="studioTelemetry">
+          Waiting for frames...
+        </p>
+      </div>
+
+      <div class="studio-chat-previews" id="studioPreviewSection">
+        <span class="resolve-label">3. Live {{ tool.preset.platform_name }} Dark &amp; Light Chat Preview</span>
+        <div class="chat-preview-grid">
+          <!-- Dark Mode Chat Simulator -->
+          <div class="chat-sim chat-sim--dark{% if tool.preset.platform_name == 'Slack' %} chat-sim--slack{% endif %}">
+            <span class="chat-sim-tag">{{ tool.preset.platform_name }} Dark</span>
+            <div class="chat-sim-msg">
+              <span class="chat-sim-avatar" aria-hidden="true"></span>
+              <div class="chat-sim-body">
+                <div class="chat-sim-meta">
+                  <strong>{{ site_name }}</strong>
+                  <span>Today at 4:20 PM</span>
+                </div>
+                {% if tool.preset.preview_style == 'discord-emoji' %}
+                  <p class="chat-sim-line">
+                    Inline 22px <img data-gif-preview class="chat-preview-inline" alt="22px inline emoji preview"> inside a message
+                  </p>
+                  <div class="chat-sim-jumbo-row">
+                    <img data-gif-preview class="chat-preview-jumbo" alt="48px jumbo emoji preview">
+                    <img data-gif-preview class="chat-preview-native" alt="128px native emoji preview">
+                  </div>
+                {% elif tool.preset.preview_style == 'slack-emoji' %}
+                  <p class="chat-sim-line">
+                    Shipped to prod <img data-gif-preview class="chat-preview-inline" alt="22px Slack inline emoji preview">
+                  </p>
+                  <div class="chat-sim-jumbo-row">
+                    <span class="chat-sim-reaction">
+                      <img data-gif-preview class="chat-preview-reaction" alt="Slack reaction pill preview">
+                      <b>4</b>
+                    </span>
+                    <img data-gif-preview class="chat-preview-native" alt="128px native Slack emoji preview">
+                  </div>
+                {% elif tool.preset.preview_style == 'discord-sticker' %}
+                  <div class="chat-sim-sticker-wrap">
+                    <img data-gif-preview class="chat-preview-sticker" alt="160px Discord sticker preview">
+                  </div>
+                {% else %}
+                  <div class="chat-sim-embed-wrap">
+                    <img data-gif-preview class="chat-preview-embed" alt="Compressed Discord GIF embed preview">
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Light Mode Chat Simulator -->
+          <div class="chat-sim chat-sim--light{% if tool.preset.platform_name == 'Slack' %} chat-sim--slack{% endif %}">
+            <span class="chat-sim-tag">{{ tool.preset.platform_name }} Light</span>
+            <div class="chat-sim-msg">
+              <span class="chat-sim-avatar" aria-hidden="true"></span>
+              <div class="chat-sim-body">
+                <div class="chat-sim-meta">
+                  <strong>{{ site_name }}</strong>
+                  <span>Today at 4:20 PM</span>
+                </div>
+                {% if tool.preset.preview_style == 'discord-emoji' %}
+                  <p class="chat-sim-line">
+                    Inline 22px <img data-gif-preview class="chat-preview-inline" alt="22px inline light emoji preview"> inside a message
+                  </p>
+                  <div class="chat-sim-jumbo-row">
+                    <img data-gif-preview class="chat-preview-jumbo" alt="48px jumbo light emoji preview">
+                    <img data-gif-preview class="chat-preview-native" alt="128px native light emoji preview">
+                  </div>
+                {% elif tool.preset.preview_style == 'slack-emoji' %}
+                  <p class="chat-sim-line">
+                    Shipped to prod <img data-gif-preview class="chat-preview-inline" alt="22px Slack light inline preview">
+                  </p>
+                  <div class="chat-sim-jumbo-row">
+                    <span class="chat-sim-reaction">
+                      <img data-gif-preview class="chat-preview-reaction" alt="Slack light reaction pill preview">
+                      <b>4</b>
+                    </span>
+                    <img data-gif-preview class="chat-preview-native" alt="128px native Slack light preview">
+                  </div>
+                {% elif tool.preset.preview_style == 'discord-sticker' %}
+                  <div class="chat-sim-sticker-wrap">
+                    <img data-gif-preview class="chat-preview-sticker" alt="160px Discord light sticker preview">
+                  </div>
+                {% else %}
+                  <div class="chat-sim-embed-wrap">
+                    <img data-gif-preview class="chat-preview-embed" alt="Compressed Discord light GIF embed preview">
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Auto-Compression & Manual Override Sliders -->
+      <div class="studio-override-box">
+        <label class="studio-autofit-toggle" for="studioAutoFit">
+          <input type="checkbox" id="studioAutoFit" checked>
+          <span>
+            <strong>Smart Auto-Fit to Byte Limit</strong>
+            <small>Automatically tunes palette colors, FPS, and scale until the GIF fits</small>
+          </span>
+        </label>
+
+        <div class="studio-slider-grid studio-slider-grid--three">
+          <label class="studio-slider-field" for="studioFps">
+            <span class="studio-slider-head">
+              <span>Max FPS</span>
+              <strong id="studioFpsValue">{{ tool.preset.default_fps }} FPS</strong>
+            </span>
+            <input type="range" id="studioFps" min="6" max="24" step="1" value="{{ tool.preset.default_fps }}">
+          </label>
+
+          <label class="studio-slider-field" for="studioColors">
+            <span class="studio-slider-head">
+              <span>Max Colors</span>
+              <strong id="studioColorsValue">256 colors</strong>
+            </span>
+            <input type="range" id="studioColors" min="32" max="256" step="16" value="256">
+          </label>
+
+          <label class="studio-slider-field" for="studioWidth">
+            <span class="studio-slider-head">
+              <span>Dimensions</span>
+              <strong id="studioWidthValue">
+                {% if tool.preset.crop_mode == 'original' %}
+                  {{ tool.preset.width }} px max
+                {% else %}
+                  {{ tool.preset.width }}×{{ tool.preset.width }} px
+                {% endif %}
+              </strong>
+            </span>
+            <input
+              type="range"
+              id="studioWidth"
+              min="96"
+              max="640"
+              step="16"
+              value="{{ tool.preset.width }}"
+            >
+          </label>
+        </div>
+      </div>
+
+      <div class="studio-actions">
+        <a
+          class="btn btn-primary btn-lg studio-download-btn"
+          id="studioDownloadBtn"
+          href="#"
+          download="{{ tool.slug }}.gif"
+        >
+          <span class="btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </span>
+          <span class="btn-copy">
+            <strong>Download Optimized .GIF</strong>
+            <small>Sized for {{ tool.preset.platform_name }} (&lt;{{ tool.preset.target_kb }} KB)</small>
+          </span>
+        </a>
+        <button type="button" class="btn btn-ghost" id="studioEncodeBtn">Re-encode GIF</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section container" id="how-it-works">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Step by step</span>
+    <h2>How to use the {{ tool.nav_label }}</h2>
+    <p>Everything runs locally inside your browser tab—no sign-up, no server queue, and no watermark.</p>
+  </div>
+  <div class="steps">
+    {% for step in tool.steps %}
+      <article class="step-card">
+        <span class="step-number">{{ "%02d"|format(loop.index) }}</span>
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.body }}</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="container">
+  <section class="ad-slot ad-slot--native" aria-label="Advertisement">
+    <span class="ad-label">Sponsored</span>
+    <div class="ad-box ad-box--native" id="ad-native">
+      <script async="async" data-cfasync="false" src="https://bauval.org/21/f7ebc449366bcd96c00ad6f97a70da8a"></script>
+      <div id="container-f7ebc449366bcd96c00ad6f97a70da8a"></div>
+    </div>
+  </section>
+</div>
+
+<section class="section container guide-body">
+  <div class="tool-specs-and-copy">
+    <div class="guide-sections">
+      <div class="section-head section-head--left">
+        <span class="eyebrow">Platform guide</span>
+        <h2>{{ tool.nav_label }} specifications &amp; tips</h2>
+      </div>
+      {% for heading, paragraphs in tool.sections %}
+        <article class="guide-section">
+          <h3>{{ heading }}</h3>
+          {% for paragraph in paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+        </article>
+      {% endfor %}
+    </div>
+
+    <aside class="spec-card" aria-labelledby="spec-title">
+      <span class="pill">{{ tool.preset.platform_name }} specs</span>
+      <h2 id="spec-title">{{ tool.nav_label }}</h2>
+      <dl class="spec-list">
+        {% for label, value in tool.specs %}
+          <div class="spec-row">
+            <dt>{{ label }}</dt>
+            <dd>{{ value }}</dd>
+          </div>
+        {% endfor %}
+      </dl>
+      <p class="spec-note">Updated {{ tool.updated }}</p>
+    </aside>
+  </div>
+</section>
+
+<section class="section container">
+  <div class="faq">
+    <div class="section-head section-head--left">
+      <span class="eyebrow">Questions</span>
+      <h2>Frequently asked questions</h2>
+    </div>
+    {% for faq in tool.faqs %}
+      <details>
+        <summary>{{ faq.question }}</summary>
+        <p>{{ faq.answer }}</p>
+      </details>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">More free browser tools</span>
+    <h2>Other GIF &amp; X (Twitter) tools</h2>
+  </div>
+  <div class="related-grid">
+    {% for other in related_tools %}
+      <a class="feature-card link-card" href="{{ other.path }}">
+        <span class="pill">{{ other.preset.platform_name }} · &lt;{{ other.preset.target_kb }} KB</span>
+        <h3>{{ other.nav_label }}</h3>
+        <p>{{ other.description }}</p>
+        <span class="link-card-cta">Open tool &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if related_guides %}
+<section class="section container">
+  <div class="section-head section-head--left">
+    <span class="eyebrow">Related guides</span>
+    <h2>Guides for X (Twitter) GIFs</h2>
+  </div>
+  <div class="related-grid">
+    {% for guide in related_guides %}
+      <a class="feature-card link-card" href="{{ guide.path }}">
+        <span class="pill">{{ guide.eyebrow }}</span>
+        <h3>{{ guide.nav_label }}</h3>
+        <p>{{ guide.description }}</p>
+        <span class="link-card-cta">Read the guide &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if support_url %}
+<section class="section container">
+  <div class="support-banner">
+    <div>
+      <span class="eyebrow">Keep it running</span>
+      <h2>Support the bot</h2>
+      <p>Your support covers server costs, bandwidth, and new browser tools.</p>
+    </div>
+    <a class="btn btn-coffee btn-lg" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+  </div>
+</section>
+{% endif %}
+
+<div class="container">
+  <div class="ad-slot ad-slot--leaderboard" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-box" id="ad-bottom">
+      <script>
+        atOptions = {
+          'key' : '9ec47b3da68641e6901cf2a2cae17ddd',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      </script>
+      <script src="https://bauval.org/22/9ec47b3da68641e6901cf2a2cae17ddd"></script>
+    </div>
+  </div>
+</div>
+
+{% if structured_data %}
+<script type="application/ld+json">{{ structured_data | safe }}</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/gif-codec.js" defer></script>
+<script src="/static/gif-studio.js" defer></script>
+{% endblock %}

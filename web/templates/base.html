@@ -20,7 +20,7 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body>
+<body{% if defer_popunder %} data-defer-popunder="true"{% endif %}>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="bg-orb bg-orb--one" aria-hidden="true"></div>
   <div class="bg-orb bg-orb--two" aria-hidden="true"></div>
@@ -45,10 +45,11 @@
 
       <nav class="site-nav" aria-label="Principal">
         <a href="/#how-it-works">How it works</a>
+        <a href="/tools">Tools</a>
+        <a href="/guides">Guides</a>
         {% if bot_profile_url %}
           <a href="{{ bot_profile_url }}" target="_blank" rel="noopener noreferrer">The bot</a>
         {% endif %}
-        <a href="/guides">Guides</a>
         <a href="/privacy">Privacy</a>
       </nav>
     </div>
@@ -62,6 +63,7 @@
     <div class="container footer-inner">
       <p>&copy; {{ current_year }} {{ site_name }}. Not affiliated with X Corp.</p>
       <nav class="footer-nav" aria-label="Footer">
+        <a href="/tools">Tools</a>
         <a href="/guides">Guides</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
@@ -72,7 +74,10 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/static/app.js" defer></script>
+  {% block extra_scripts %}{% endblock %}
+  {% if not defer_popunder %}
   <script data-cfasync="false" src="https://abscloud.org/1/140c2216056e700f5e6d37718f553843"></script>
+  {% endif %}
   <script data-cfasync="false" src="https://bauval.org/14/6275b24b9860382870ce888420fc9331"></script>
 </body>
 </html>

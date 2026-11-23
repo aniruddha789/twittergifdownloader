@@ -26,8 +26,9 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from landing_pages import LANDING_PAGES, LandingPage, related_pages
+from landing_pages import LANDING_PAGES, PAGE_BY_SLUG, LandingPage, related_pages
 from jobs import ConversionResult, JobManager
+from tool_pages import TOOL_PAGES, ToolPage, related_tool_pages
 from media import (
     MediaCache,
     MediaClient,
@@ -236,8 +237,9 @@ CSP = (
     "object-src 'none'; "
     "frame-ancestors 'none'; "
     "form-action 'self'; "
-    "img-src 'self' data: https:; "
-    "media-src 'self' https:; "
+    "img-src 'self' data: blob: https:; "
+    "media-src 'self' blob: https:; "
+    "worker-src 'self' blob:; "
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
     "https://pagead2.googlesyndication.com https://*.googlesyndication.com "
     "https://*.doubleclick.net https://*.google.com https://*.googleadservices.com "
@@ -387,6 +389,7 @@ def render_landing(request: Request, page: LandingPage) -> HTMLResponse:
             page_description=page.description,
             page=page,
             related=related_pages(page),
+            tools=TOOL_PAGES,
             structured_data=landing_structured_data(page),
         ),
     )
@@ -395,6 +398,109 @@ def render_landing(request: Request, page: LandingPage) -> HTMLResponse:
 def make_landing_handler(page: LandingPage):
     async def handler(request: Request) -> HTMLResponse:
         return render_landing(request, page)
+
+    return handler
+
+
+def tool_structured_data(tool: ToolPage) -> str:
+    base = settings.public_base_url
+    graph = [
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": f"{base}/",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Tools",
+                    "item": f"{base}/tools",
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": tool.nav_label,
+                    "item": f"{base}{tool.path}",
+                },
+            ],
+        },
+        {
+            "@type": "SoftwareApplication",
+            "name": f"{tool.nav_label} - {settings.site_name}",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "Web Browser (Any)",
+            "url": f"{base}{tool.path}",
+            "description": tool.description,
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+            },
+        },
+        {
+            "@type": "HowTo",
+            "name": tool.title,
+            "description": tool.description,
+            "totalTime": "PT1M",
+            "step": [
+                {
+                    "@type": "HowToStep",
+                    "position": index,
+                    "name": step.title,
+                    "text": step.body,
+                }
+                for index, step in enumerate(tool.steps, start=1)
+            ],
+        },
+        {
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": faq.question,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": faq.answer,
+                    },
+                }
+                for faq in tool.faqs
+            ],
+        },
+    ]
+    return json.dumps(
+        {"@context": "https://schema.org", "@graph": graph},
+        ensure_ascii=False,
+    )
+
+
+def render_tool(request: Request, tool: ToolPage) -> HTMLResponse:
+    guides = tuple(
+        PAGE_BY_SLUG[slug] for slug in tool.related_guides if slug in PAGE_BY_SLUG
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="tool.html",
+        context=page_context(
+            request,
+            page_title=f"{tool.page_title} - {settings.site_name}",
+            page_description=tool.description,
+            defer_popunder=True,
+            tool=tool,
+            all_tools=TOOL_PAGES,
+            related_tools=related_tool_pages(tool),
+            related_guides=guides,
+            structured_data=tool_structured_data(tool),
+        ),
+    )
+
+
+def make_tool_handler(tool: ToolPage):
+    async def handler(request: Request) -> HTMLResponse:
+        return render_tool(request, tool)
 
     return handler
 
@@ -433,6 +539,27 @@ async def landing_page(request: Request) -> HTMLResponse:
                 "no watermark."
             ),
             guides=LANDING_PAGES,
+            tools=TOOL_PAGES,
+        ),
+    )
+
+
+@app.get("/tools", response_class=HTMLResponse)
+async def tools_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="tools.html",
+        context=page_context(
+            request,
+            page_title=f"Free GIF & Emoji Micro-Tools - Discord & Slack Optimizer - {settings.site_name}",
+            page_description=(
+                "Free 100% browser-based GIF and MP4 micro-tools: Discord Emoji Maker "
+                "(<256KB), Discord Sticker Maker (<512KB), Slack Emoji Maker (<128KB), "
+                "and Discord GIF Compressor. No server upload."
+            ),
+            defer_popunder=True,
+            tools=TOOL_PAGES,
+            guides=LANDING_PAGES,
         ),
     )
 
@@ -461,6 +588,14 @@ for _page in LANDING_PAGES:
         make_landing_handler(_page),
         response_class=HTMLResponse,
         name=f"landing_{_page.slug.replace('-', '_')}",
+    )
+
+for _tool in TOOL_PAGES:
+    app.add_api_route(
+        _tool.path,
+        make_tool_handler(_tool),
+        response_class=HTMLResponse,
+        name=f"tool_{_tool.slug.replace('-', '_')}",
     )
 
 
@@ -513,6 +648,19 @@ async def download_page(
         query += f"&tweet_id={quote(clean_tweet_id, safe='')}"
     convert_query = f"{query}&v={gif_cache.settings_key}"
 
+    handoff_tools = tuple(
+        {
+            "short_action": tool.short_action,
+            "spec": (
+                f"{tool.preset.width}×{tool.preset.height} · <{tool.preset.target_kb} KB"
+                if tool.preset.height > 0
+                else f"Original ratio · <{tool.preset.target_kb} KB"
+            ),
+            "href": f"{tool.path}{query}",
+        }
+        for tool in TOOL_PAGES
+    )
+
     return templates.TemplateResponse(
         request=request,
         name="download.html",
@@ -534,6 +682,7 @@ async def download_page(
             mp4_href=f"/download/mp4{query}",
             convert_href=f"/convert{convert_query}",
             start_href=f"/convert/start{convert_query}",
+            handoff_tools=handoff_tools,
         ),
     )
 
@@ -543,6 +692,8 @@ async def download_mp4(
     request: Request,
     url: str = Query(default=""),
     tweet_id: str | None = Query(default=None),
+    raw: bool = Query(default=False),
+    prefer_cached: bool = Query(default=False),
 ):
     try:
         media_url = validate_media_url(url, settings.allowed_media_hosts)
@@ -563,7 +714,7 @@ async def download_mp4(
         upstream = await media_client.open_stream(media_url)
         return stream_mp4_response(upstream, clean_tweet_id)
 
-    if not settings.mp4_fix_enabled or not media_client.ffmpeg_available():
+    if raw or not settings.mp4_fix_enabled or not media_client.ffmpeg_available():
         try:
             return await stream_original()
         except MediaError as exc:
@@ -573,6 +724,12 @@ async def download_mp4(
     if cached is not None:
         log.info("MP4 cache hit (url) for tweet %s", clean_tweet_id)
         return mp4_response(cached, clean_tweet_id, cacheable=True)
+
+    if prefer_cached:
+        try:
+            return await stream_original()
+        except MediaError as exc:
+            return render_error(request, exc)
 
     if not await media_client.acquire_slot():
         try:
@@ -887,8 +1044,13 @@ async def robots() -> PlainTextResponse:
 async def sitemap() -> Response:
     entries = [
         (f"{settings.public_base_url}/", None, "weekly", "1.0"),
+        (f"{settings.public_base_url}/tools", None, "weekly", "0.9"),
         (f"{settings.public_base_url}/guides", None, "weekly", "0.8"),
     ]
+    entries.extend(
+        (f"{settings.public_base_url}{tool.path}", tool.updated, "monthly", "0.9")
+        for tool in TOOL_PAGES
+    )
     entries.extend(
         (f"{settings.public_base_url}{page.path}", page.updated, "monthly", "0.8")
         for page in LANDING_PAGES
