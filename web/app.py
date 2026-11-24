@@ -1044,11 +1044,11 @@ async def robots() -> PlainTextResponse:
 async def sitemap() -> Response:
     entries = [
         (f"{settings.public_base_url}/", None, "weekly", "1.0"),
-        (f"{settings.public_base_url}/tools", None, "weekly", "0.9"),
+        (f"{settings.public_base_url}/tools", None, "weekly", "0.8"),
         (f"{settings.public_base_url}/guides", None, "weekly", "0.8"),
     ]
     entries.extend(
-        (f"{settings.public_base_url}{tool.path}", tool.updated, "monthly", "0.9")
+        (f"{settings.public_base_url}{tool.path}", tool.updated, "monthly", "0.8")
         for tool in TOOL_PAGES
     )
     entries.extend(
