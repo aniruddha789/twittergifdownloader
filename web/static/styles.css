@@ -1005,8 +1005,12 @@ button:focus-visible {
 
 .download-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.1rem;
   align-items: start;
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
 }
 
 .card {
@@ -1016,10 +1020,6 @@ button:focus-visible {
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-}
-
-.preview-card {
-  padding: clamp(0.9rem, 3vw, 1.4rem);
 }
 
 .action-card {
@@ -1067,42 +1067,6 @@ button:focus-visible {
 .text-link:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.video-frame {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 16px;
-  background: #03050a;
-}
-
-.video-frame video {
-  display: block;
-  width: 100%;
-  max-height: 66vh;
-  background: #000;
-  object-fit: contain;
-}
-
-.video-fallback {
-  display: grid;
-  min-height: 240px;
-  place-content: center;
-  gap: 0.4rem;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.video-fallback p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.preview-caption {
-  margin: 0.8rem 0 0;
-  color: var(--muted-2);
-  font-size: 0.75rem;
 }
 
 .action-card .eyebrow {
@@ -2169,7 +2133,6 @@ button:focus-visible {
     gap: 3.5rem;
   }
 
-  .download-grid,
   .studio-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.3rem;
@@ -2178,11 +2141,6 @@ button:focus-visible {
   .tool-specs-and-copy {
     grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
     gap: 2rem;
-  }
-
-  .preview-card {
-    position: sticky;
-    top: 88px;
   }
 }
 
@@ -2249,10 +2207,6 @@ button:focus-visible {
 
   .action-card h1 {
     font-size: 1.95rem;
-  }
-
-  .video-frame video {
-    max-height: 52vh;
   }
 }
 

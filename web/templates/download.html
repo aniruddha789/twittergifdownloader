@@ -26,41 +26,6 @@
   </a>
 
   <div class="download-grid">
-    <section class="card preview-card" aria-labelledby="preview-title">
-      <div class="card-head">
-        <div>
-          <span class="pill">X media preview</span>
-          <h2 id="preview-title" class="card-title">Your file</h2>
-        </div>
-        {% if tweet_url %}
-          <a class="text-link" href="{{ tweet_url }}" target="_blank" rel="noopener noreferrer">View post
-            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          </a>
-        {% endif %}
-      </div>
-
-      <div class="video-frame">
-        <video
-          data-preview-video
-          src="{{ media_url }}"
-          controls
-          autoplay
-          loop
-          muted
-          playsinline
-          preload="metadata"
-          aria-label="GIF or video preview"
-        >
-          Your browser cannot preview this file.
-        </video>
-        <div class="video-fallback" data-video-fallback hidden>
-          <p>Preview unavailable in this browser.</p>
-          <a class="text-link" href="{{ media_url }}" target="_blank" rel="noopener noreferrer">Open the original MP4</a>
-        </div>
-      </div>
-      <p class="preview-caption">The preview uses X's original MP4. The MP4 download is normalized so phones accept it; nothing is re-encoded until you ask for it.</p>
-    </section>
-
     <section class="card action-card" aria-labelledby="download-title">
       <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Ready to save</span>
       <h1 id="download-title">Your GIF is ready.</h1>

@@ -223,19 +223,4 @@
       });
     }
   }
-
-  const video = document.querySelector("[data-preview-video]");
-  const fallback = document.querySelector("[data-video-fallback]");
-
-  if (video && fallback) {
-    const showFallback = () => {
-      video.hidden = true;
-      fallback.hidden = false;
-    };
-
-    video.addEventListener("error", showFallback);
-    window.setTimeout(() => {
-      if (video.error) showFallback();
-    }, 7000);
-  }
 })();
