@@ -272,7 +272,7 @@ Set `BOOTSTRAP_ON_FIRST_RUN=true` for the first deployment. Set `BASE_WEB_URL` t
 5. Run `docker compose up --build -d`.
 6. Put Caddy or Nginx in front of port 8000 for TLS.
 
-Optional: install the login deploy helper. It pulls the repo and rebuilds the web service on every interactive SSH login, and exposes an `xgif-deploy` command that works from any directory:
+Optional: install the deploy helper. It pulls the repo and rebuilds web and bot on interactive SSH login, but only when there are new commits, and exposes an `xgif-deploy` command that works from any directory:
 
 ```bash
 cd /opt/apps/twittergifdownloader
@@ -281,8 +281,20 @@ sudo bash scripts/xgif-deploy.sh --install
 
 - `xgif-deploy` pulls and rebuilds/restarts the web service.
 - `xgif-deploy --bot` also rebuilds/restarts the bot service.
+- `xgif-deploy --changed` rebuilds only when `origin/main` has new commits.
 - `XGIF_APP_DIR` overrides the repository path (default `/opt/apps/twittergifdownloader`).
 - `XGIF_SKIP_DEPLOY=1` skips the automatic login run.
+
+To deploy automatically when you push to `main`, install the systemd timer instead. It checks `origin/main` every `XGIF_POLL_SECONDS` (default `120`) and runs `xgif-deploy --bot --changed`, so web and bot are rebuilt only when new commits arrive:
+
+```bash
+cd /opt/apps/twittergifdownloader
+sudo bash scripts/xgif-deploy.sh --install-timer
+systemctl list-timers xgif-deploy.timer
+journalctl -u xgif-deploy.service -f
+```
+
+The timer polls rather than receiving a webhook. For instant deploys, use a GitHub Actions self-hosted runner or a webhook receiver instead.
 
 Example Caddyfile:
 
