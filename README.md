@@ -272,6 +272,18 @@ Set `BOOTSTRAP_ON_FIRST_RUN=true` for the first deployment. Set `BASE_WEB_URL` t
 5. Run `docker compose up --build -d`.
 6. Put Caddy or Nginx in front of port 8000 for TLS.
 
+Optional: install the login deploy helper. It pulls the repo and rebuilds the web service on every interactive SSH login, and exposes an `xgif-deploy` command that works from any directory:
+
+```bash
+cd /opt/apps/twittergifdownloader
+sudo bash scripts/xgif-deploy.sh --install
+```
+
+- `xgif-deploy` pulls and rebuilds/restarts the web service.
+- `xgif-deploy --bot` also rebuilds/restarts the bot service.
+- `XGIF_APP_DIR` overrides the repository path (default `/opt/apps/twittergifdownloader`).
+- `XGIF_SKIP_DEPLOY=1` skips the automatic login run.
+
 Example Caddyfile:
 
 ```caddyfile
