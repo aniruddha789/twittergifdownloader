@@ -481,6 +481,21 @@ def render_tool(request: Request, tool: ToolPage) -> HTMLResponse:
     guides = tuple(
         PAGE_BY_SLUG[slug] for slug in tool.related_guides if slug in PAGE_BY_SLUG
     )
+    handoff_query = ""
+    raw_media = request.query_params.get("url")
+    if raw_media:
+        try:
+            handoff_media = validate_media_url(
+                raw_media, settings.allowed_media_hosts
+            )
+            handoff_tweet = validate_tweet_id(request.query_params.get("tweet_id"))
+        except MediaError:
+            handoff_media = None
+            handoff_tweet = None
+        if handoff_media:
+            handoff_query = f"?url={quote(handoff_media, safe='')}"
+            if handoff_tweet:
+                handoff_query += f"&tweet_id={quote(handoff_tweet, safe='')}"
     return templates.TemplateResponse(
         request=request,
         name="tool.html",
@@ -493,6 +508,7 @@ def render_tool(request: Request, tool: ToolPage) -> HTMLResponse:
             all_tools=TOOL_PAGES,
             related_tools=related_tool_pages(tool),
             related_guides=guides,
+            handoff_query=handoff_query,
             structured_data=tool_structured_data(tool),
         ),
     )

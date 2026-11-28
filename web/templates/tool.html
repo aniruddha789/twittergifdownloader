@@ -38,7 +38,7 @@
     {% for item in all_tools %}
       <a
         class="tool-tab{% if item.slug == tool.slug %} is-active{% endif %}"
-        href="{{ item.path }}"
+        href="{{ item.path }}{{ handoff_query }}"
         {% if item.slug == tool.slug %}aria-current="page"{% endif %}
       >
         {{ item.nav_label }}
@@ -425,7 +425,7 @@
   </div>
   <div class="related-grid">
     {% for other in related_tools %}
-      <a class="feature-card link-card" href="{{ other.path }}">
+      <a class="feature-card link-card" href="{{ other.path }}{{ handoff_query }}">
         <span class="pill">{{ other.preset.platform_name }} · &lt;{{ other.preset.target_kb }} KB</span>
         <h3>{{ other.nav_label }}</h3>
         <p>{{ other.description }}</p>
